@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8"><title>Neon Tetris Fixed</title>
+
+    <style>
+
+        body { background: #050508; color: #00ffcc; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+
+        h1 { margin: 0 0 10px; font-size: 2rem; text-shadow: 0 0 10px #00ffcc; letter-spacing: 4px; }
+
+        #box { display: flex; gap: 20px; background: #0d0d13; padding: 15px; border-radius: 12px; box-shadow: 0 0 25px rgba(0,255,204,0.15); border: 1px solid #1f1f2e; }
+
+        canvas { border: 2px solid #00ffcc; background: #020203; box-shadow: 0 0 15px rgba(0,255,204,0.1); }
+
+        .info { background: #13131a; padding: 15px; border-radius: 8px; text-align: center; min-width: 80px; border: 1px solid #262636; }
+
+        .info h2 { margin: 0; font-size: 0.8rem; color: #ff007f; text-shadow: 0 0 5px #ff007f; }
+
+        #s { font-size: 1.8rem; font-weight: bold; margin-top: 5px; }
+
+    </style>
+
+</head>
+
+<body>
+
+    <h1>TETRIS</h1>
+
+    <div id="box">
+
+        <canvas id="t" width="240" height="400"></canvas>
+
+        <div class="info"><h2>SCORE</h2><div id="s">0</div></div>
+
+    </div>
+
+<script>
+
+    const canvas = document.getElementById('t'), ctx = canvas.getContext('2d');
+
+    ctx.scale(24, 24);
+
+    const arena = Array(20).fill().map(() => Array(10).fill(0));
+
+    const colors = [null, '#00ffcc', '#ff007f', '#9b51e0', '#fffe00', '#ff9f00', '#00ff00', '#ff0000'];
+
+    const pieces = [
+
+        [[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]], [[0,2,0],[0,2,0],[0,2,2]], [[0,3,0],[0,3,0],[3,3,0]],
+
+        [[4,4],[4,4]], [[0,5,5],[5,5,0],[0,0,0]], [[6,6,0],[0,6,6],[0,0,0]], [[0,7,0],[7,7,7],[0,0,0]]
+
+    ];
+
+    const player = { pos: {x: 0, y: 0}, matrix: null, score: 0 };
+
+    function collide(a, p) {
+
+        for (let y = 0; y < p.matrix.length; ++y) {
+
+            for (let x = 0; x < p.matrix[y].length; ++x) {
+
+                if (p.matrix[y][x] !== 0 && (a[y + p.pos.y] && a[y + p.pos.y][x + p.pos.x]) !== 0) return true;
+
+            }
+
+        }
+
+        return false;
+
+    }
+
+    function merge(a, p) {
+
+        p.matrix.forEach((row, y) => row.forEach((v, x) => { if (v !== 0) a[y + p.pos.y][x + p.pos.x] = v; }));
+
+    }
+
+    function drawMatrix(m, o) {
+
+        m.forEach((row, y) => row.forEach((v, x) => {
+
+            if (v !== 0) {
+
+                ctx.fillStyle = colors[v];
+
+                ctx.shadowBlur = 10; ctx.shadowColor = colors[v];
+
+                ctx.fillRect(x + o.x, y + o.y, 0.9, 0.9);
+
+                ctx.shadowBlur = 0;
+
+            }
+
+        }));
+
+    }
+
+    function draw() {
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        drawMatrix(arena, {x: 0, y: 0});
+
+        drawMatrix(player.matrix, player.pos);
+
+    }
+
+    function playerReset() {
+
+        player.matrix = pieces[Math.floor(Math.random() * pieces.length)];
+
+        player.pos = { y: 0, x: Math.floor(arena[0].length / 2 - player.matrix[0].length / 2) };
+
+        if (collide(arena, player)) { arena.forEach(r => r.fill(0)); player.score = 0; }
+
+    }
+
+    function drop() {
+
+        player.pos.y++;
+
+        if (collide(arena, player)) {
+
+            player.pos.y--; merge(arena, player); playerReset(); sweep();
+
+        }
+
+        dropCounter = 0; // Fixed: Uses the correct local tracking variable now
+
+    }
+
+    function sweep() {
+
+        let rCount = 10;
+
+        outer: for (let y = arena.length - 1; y > 0; --y) {
+
+            if (arena[y].every(v => v !== 0)) {
+
+                arena.splice(y, 1); arena.unshift(Array(10).fill(0));
+
+                player.score += rCount; rCount *= 2; y++;
+
+            }
+
+        }
+
+        document.getElementById('s').innerText = player.score;
+
+    }
+
+    function rotate(m) {
+
+        for (let y = 0; y < m.length; ++y) for (let x = 0; x < y; ++x) [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
+
+        m.forEach(r => r.reverse());
+
+    }
+
+    function playerRotate() {
+
+        const x = player.pos.x; let offset = 1; rotate(player.matrix);
+
+        while (collide(arena, player)) {
+
+            player.pos.x += offset; offset = -(offset + (offset > 0 ? 1 : -1));
+
+            if (offset > player.matrix[0].length) { rotate(player.matrix); player.pos.x = x; return; }
+
+        }
+
+    }
+
+    document.addEventListener('keydown', e => {
+
+        if (e.keyCode === 37) { player.pos.x--; if(collide(arena,player)) player.pos.x++; }
+
+        if (e.keyCode === 39) { player.pos.x++; if(collide(arena,player)) player.pos.x--; }
+
+        if (e.keyCode === 40) drop();
+
+        if (e.keyCode === 38) playerRotate();
+
+        if (e.keyCode === 32) { while(!collide(arena, player)) { player.pos.y++; } player.pos.y--; merge(arena, player); playerReset(); sweep(); } // Spacebar Hard Drop
+
+    });
+
+    let dropCounter = 0, lastTime = 0;
+
+    function update(time = 0) {
+
+        dropCounter += time - lastTime; lastTime = time;
+
+        if (dropCounter > 1000) drop();
+
+        draw(); requestAnimationFrame(update);
+
+    }
+
+    playerReset(); update();
+
+</script>
+
+</body>
+
+</html>
