@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>고양이 용암 점프맵</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(#87CEEB, #ffffff);
+            font-family: sans-serif;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: transparent;
+        }
+
+        #ui {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: #333;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="ui">코인: 0</div>
+    <canvas id="game" width="400" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById("game");
+        const ctx = canvas.getContext("2d");
+        let keys = {};
+        let coins = 0;
+        let cameraY = 0;
+        document.addEventListener("keydown", e => keys[e.code] = true);
+        document.addEventListener("keyup", e => keys[e.code] = false);
+        const cat = {
+            x: 180,
+            y: 500,
+            w: 30,
+            h: 30,
+            vx: 0,
+            vy: 0,
+            onGround: false
+        };
+        const gravity = 0.4;
+        const jumpPower = -8;
+        let lavaY = 650;
+        const platforms = [];
+        const coinItems = [];
+        function createPlatform(y) {
+            const typeRand = Math.random();
+            let type = "normal";
+            if (typeRand < 0.25) type = "break";
+            else if (typeRand < 0.5) type = "shake";
+            platforms.push({
+                x: Math.random() * 320,
+                y: y,
+                w: 80,
+                h: 10,
+                type: type,
+                timer: 0,
+                shakeOffset: 0
+            });
+            if (Math.random() < 0.4) {
+                coinItems.push({
+                    x: Math.random() * 360,
+                    y: y - 20,
+                    r: 6,
+                    taken: false
+                });
+            }
+        }
+        for (let i = 0; i < 20; i++) {
+            createPlatform(600 - i * 80);
+        }
+        function resetGame() {
+            alert("용암에 닿았습니다! 재시작");
+            location.reload();
+        }
+        function update() {
+            // 이동
+            if (keys["ArrowLeft"]) cat.vx = -3;
+            else if (keys["ArrowRight"]) cat.vx = 3;
+            else cat.vx *= 0.8;
+            if (keys["Space"] && cat.onGround) {
+                cat.vy = jumpPower;
+                cat.onGround = false;
+            }
+            cat.vy += gravity;
+            cat.x += cat.vx;
+            cat.y += cat.vy;
+            // 화면 경계
+            if (cat.x < 0) cat.x = 0;
+            if (cat.x > 370) cat.x = 370;
+            // 카메라
+            cameraY = cat.y - 400;
+            // 발판 충돌
+            cat.onGround = false;
+            for (let p of platforms) {
+                if (
+                    cat.x < p.x + p.w &&
+                    cat.x + cat.w > p.x &&
+                    cat.y + cat.h < p.y + 10 &&
+                    cat.y + cat.h + cat.vy >= p.y &&
+                    cat.vy >= 0
+                ) {
+                    cat.y = p.y - cat.h;
+                    cat.vy = 0;
+                    cat.onGround = true;
+                    if (p.type === "break") {
+                        p.timer++;
+                        if (p.timer > 10) p.y = 9999;
+                    }
+                }
+                if (p.type === "shake") {
+                    p.shakeOffset = Math.sin(Date.now() / 100) * 5;
+                }
+            }
+            // 코인 먹기
+            for (let c of coinItems) {
+                if (!c.taken &&
+                    Math.abs(cat.x - c.x) < 20 &&
+                    Math.abs(cat.y - c.y) < 20
+                ) {
+                    c.taken = true;
+                    coins++;
+                    document.getElementById("ui").innerText = "코인: " + coins;
+                }
+            }
+            // 용암 상승
+            lavaY -= 0.2;
+            if (cat.y > lavaY + 200) resetGame();
+            // 발판 생성 (무한)
+            if (platforms.length < 30) {
+                createPlatform(cameraY - Math.random() * 200);
+            }
+        }
+        function drawCat() {
+            ctx.fillStyle = "#ffb6c1";
+            ctx.fillRect(cat.x, cat.y - cameraY, cat.w, cat.h);
+            // 귀
+            ctx.fillStyle = "#ff99aa";
+            ctx.beginPath();
+            ctx.moveTo(cat.x, cat.y - cameraY);
+            ctx.lineTo(cat.x + 10, cat.y - 10 - cameraY);
+            ctx.lineTo(cat.x + 20, cat.y - cameraY);
+            ctx.fill();
+        }
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // 용암
+            ctx.fillStyle = "red";
+            ctx.fillRect(0, lavaY - cameraY, 400, 600);
+            // 발판
+            for (let p of platforms) {
+                ctx.fillStyle =
+                    p.type === "break" ? "#999" :
+                        p.type === "shake" ? "#66ccff" :
+                            "#4caf50";
+                ctx.fillRect(
+                    p.x + (p.type === "shake" ? p.shakeOffset : 0),
+                    p.y - cameraY,
+                    p.w,
+                    p.h
+                );
+            }
+            // 코인
+            for (let c of coinItems) {
+                if (!c.taken) {
+                    ctx.fillStyle = "gold";
+                    ctx.beginPath();
+                    ctx.arc(c.x, c.y - cameraY, c.r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            drawCat();
+        }
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+        loop();
+    </script>
+</body>
+
+</html>
