@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>캐치! 티니핑 퀴즈</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #fdf0ff;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #ff4fa3;
+        }
+
+        #quizBox {
+            display: none;
+            margin-top: 20px;
+        }
+
+        img {
+            width: 300px;
+            height: 300px;
+            object-fit: contain;
+            border: 3px solid pink;
+            background: white;
+            border-radius: 10px;
+        }
+
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 200px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        #result {
+            margin-top: 15px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>캐치! 티니핑 퀴즈</h1>
+    <div id="startMenu">
+        <h3>난이도 선택</h3>
+        <button onclick="startGame(10)">10문제</button>
+        <button onclick="startGame(20)">20문제</button>
+        <button onclick="startGame(30)">30문제</button>
+    </div>
+    <div id="quizBox">
+        <h2 id="progress"></h2>
+        <img id="tiniImage" src="" alt="티니핑">
+        <br><br>
+        <input type="text" id="answer" placeholder="티니핑 이름 입력">
+        <br><br>
+        <button onclick="checkAnswer()">정답 확인</button>
+        <div id="result"></div>
+    </div>
+    <script>
+        // 실제 이미지 링크로 교체하세요.
+        const tinipings = [
+            {
+                name: "하츄핑",
+                image: "https://example.com/hachuping.png"
+            },
+            {
+                name: "차차핑",
+                image: "https://example.com/chachaping.png"
+            },
+            {
+                name: "바로핑",
+                image: "https://example.com/baroping.png"
+            },
+            {
+                name: "아자핑",
+                image: "https://example.com/ajaping.png"
+            },
+            {
+                name: "라라핑",
+                image: "https://example.com/lalaping.png"
+            },
+            {
+                name: "꾸래핑",
+                image: "https://example.com/kkuraeping.png"
+            },
+            // 시즌1~6 티니핑 계속 추가
+        ];
+        let quizList = [];
+        let current = 0;
+        let score = 0;
+        let totalQuestion = 10;
+        function shuffle(arr) {
+            return [...arr].sort(() => Math.random() - 0.5);
+        }
+        function startGame(count) {
+            totalQuestion = count;
+            quizList = shuffle(tinipings);
+            if (quizList.length < count) {
+                alert(
+                    "티니핑 데이터가 부족합니다. "
+                    + count +
+                    "개 이상 등록하세요."
+                );
+                return;
+            }
+            quizList = quizList.slice(0, count);
+            current = 0;
+            score = 0;
+            document.getElementById("startMenu").style.display = "none";
+            document.getElementById("quizBox").style.display = "block";
+            showQuestion();
+        }
+        function showQuestion() {
+            document.getElementById("answer").value = "";
+            document.getElementById("result").innerHTML = "";
+            const q = quizList[current];
+            document.getElementById("tiniImage").src = q.image;
+            document.getElementById("progress").innerText =
+                `${current + 1} / ${totalQuestion}`;
+        }
+        function checkAnswer() {
+            const user =
+                document.getElementById("answer")
+                    .value
+                    .trim();
+            const answer = quizList[current].name;
+            if (user === answer) {
+                score++;
+                document.getElementById("result").innerHTML =
+                    "⭕ 정답!";
+            } else {
+                document.getElementById("result").innerHTML =
+                    `❌ 오답!<br>정답 : ${answer}`;
+            }
+            setTimeout(() => {
+                current++;
+                if (current >= totalQuestion) {
+                    document.getElementById("quizBox").innerHTML =
+                        `
+            <h2>퀴즈 종료!</h2>
+            <h3>점수 : ${score} / ${totalQuestion}</h3>
+            <button onclick="location.reload()">
+                다시하기
+            </button>
+            `;
+                } else {
+                    showQuestion();
+                }
+            }, 1500);
+        }
+    </script>
+</body>
+
+</html>
