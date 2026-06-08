@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>강아지 견종 맞추기 퀴즈 🐶</title>
+
+
+
+<style>
+
+body{
+
+    font-family: "Malgun Gothic", sans-serif;
+
+    background:#f5f7fb;
+
+    text-align:center;
+
+    margin:0;
+
+    padding:20px;
+
+}
+
+
+
+.container{
+
+    max-width:700px;
+
+    margin:auto;
+
+    background:white;
+
+    padding:20px;
+
+    border-radius:15px;
+
+    box-shadow:0 0 15px rgba(0,0,0,.1);
+
+}
+
+
+
+h1{
+
+    color:#ff7b00;
+
+}
+
+
+
+#dogImage{
+
+    width:100%;
+
+    max-width:500px;
+
+    height:350px;
+
+    object-fit:cover;
+
+    border-radius:12px;
+
+    border:4px solid #eee;
+
+}
+
+
+
+#question{
+
+    font-size:22px;
+
+    margin:15px 0;
+
+}
+
+
+
+.choices{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:10px;
+
+    margin-top:15px;
+
+}
+
+
+
+button{
+
+    padding:12px;
+
+    border:none;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    background:#4a90e2;
+
+    color:white;
+
+    font-size:16px;
+
+}
+
+
+
+button:hover{
+
+    background:#357bd8;
+
+}
+
+
+
+#message{
+
+    margin-top:15px;
+
+    font-size:24px;
+
+    font-weight:bold;
+
+    height:40px;
+
+}
+
+
+
+.correct{
+
+    color:green;
+
+}
+
+
+
+.wrong{
+
+    color:red;
+
+}
+
+
+
+#scoreScreen{
+
+    display:none;
+
+}
+
+
+
+.score{
+
+    font-size:32px;
+
+    color:#ff7b00;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+
+<div class="container">
+
+
+
+    <div id="quizScreen">
+
+        <h1>🐶 강아지 견종 맞추기 퀴즈</h1>
+
+
+
+        <div id="progress"></div>
+
+
+
+        <img id="dogImage">
+
+
+
+        <div id="question">
+
+            이 강아지의 견종은?
+
+        </div>
+
+
+
+        <div class="choices" id="choices"></div>
+
+
+
+        <div id="message"></div>
+
+    </div>
+
+
+
+    <div id="scoreScreen">
+
+        <h1>🎉 퀴즈 종료!</h1>
+
+        <p class="score" id="finalScore"></p>
+
+    </div>
+
+
+
+</div>
+
+
+
+<script>
+
+const dogs = [
+
+{
+
+name:"시츄",
+
+image:"images/shih_tzu.jpg"
+
+},
+
+{
+
+name:"사모예드",
+
+image:"images/samoyed.jpg"
+
+},
+
+{
+
+name:"웰시코기",
+
+image:"images/corgi.jpg"
+
+},
+
+{
+
+name:"말티즈",
+
+image:"images/maltese.jpg"
+
+},
+
+{
+
+name:"이탈리안 그레이하운드",
+
+image:"images/italian_greyhound.jpg"
+
+},
+
+{
+
+name:"진돗개",
+
+image:"images/jindo.jpg"
+
+},
+
+{
+
+name:"저먼 셰퍼드",
+
+image:"images/german_shepherd.jpg"
+
+},
+
+{
+
+name:"골든 리트리버",
+
+image:"images/golden_retriever.jpg"
+
+},
+
+{
+
+name:"푸들",
+
+image:"images/poodle.jpg"
+
+},
+
+{
+
+name:"코카 스파니엘",
+
+image:"images/cocker_spaniel.jpg"
+
+}
+
+];
+
+
+
+let current = 0;
+
+let score = 0;
+
+
+
+shuffle(dogs);
+
+
+
+function shuffle(arr){
+
+    for(let i=arr.length-1;i>0;i--){
+
+        const j=Math.floor(Math.random()*(i+1));
+
+        [arr[i],arr[j]]=[arr[j],arr[i]];
+
+    }
+
+}
+
+
+
+function getChoices(correct){
+
+    const names = dogs.map(d=>d.name);
+
+    const choices = [correct];
+
+
+
+    while(choices.length < 4){
+
+        const random =
+
+            names[Math.floor(Math.random()*names.length)];
+
+
+
+        if(!choices.includes(random)){
+
+            choices.push(random);
+
+        }
+
+    }
+
+
+
+    shuffle(choices);
+
+    return choices;
+
+}
+
+
+
+function loadQuestion(){
+
+
+
+    const dog = dogs[current];
+
+
+
+    document.getElementById("progress").innerText =
+
+        `문제 ${current+1} / 10`;
+
+
+
+    document.getElementById("dogImage").src =
+
+        dog.image;
+
+
+
+    document.getElementById("message").innerText = "";
+
+
+
+    const choicesDiv =
+
+        document.getElementById("choices");
+
+
+
+    choicesDiv.innerHTML = "";
+
+
+
+    const choices =
+
+        getChoices(dog.name);
+
+
+
+    choices.forEach(choice => {
+
+
+
+        const btn =
+
+            document.createElement("button");
+
+
+
+        btn.innerText = choice;
+
+
+
+        btn.onclick = () =>
+
+            checkAnswer(choice);
+
+
+
+        choicesDiv.appendChild(btn);
+
+    });
+
+}
+
+
+
+function checkAnswer(answer){
+
+
+
+    const dog = dogs[current];
+
+    const message =
+
+        document.getElementById("message");
+
+
+
+    if(answer === dog.name){
+
+
+
+        score++;
+
+
+
+        message.className = "correct";
+
+        message.innerText =
+
+            "맞혔어! 멍멍! 🐶";
+
+
+
+        document
+
+            .querySelectorAll("button")
+
+            .forEach(btn => btn.disabled = true);
+
+
+
+        setTimeout(() => {
+
+
+
+            current++;
+
+
+
+            if(current >= dogs.length){
+
+                showScore();
+
+            } else {
+
+                loadQuestion();
+
+            }
+
+
+
+        },1000);
+
+
+
+    }else{
+
+
+
+        message.className = "wrong";
+
+        message.innerText =
+
+            "틀렸어! 멍멍! 🐶";
+
+    }
+
+}
+
+
+
+function showScore(){
+
+
+
+    document.getElementById("quizScreen")
+
+        .style.display = "none";
+
+
+
+    document.getElementById("scoreScreen")
+
+        .style.display = "block";
+
+
+
+    document.getElementById("finalScore")
+
+        .innerText =
+
+        `${score} / ${dogs.length} 점`;
+
+}
+
+
+
+loadQuestion();
+
+</script>
+
+
+
+</body>
+
+</html>
