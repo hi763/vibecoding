@@ -4,131 +4,147 @@
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>우리반 친구 퀴즈</title>
+<title>우리반 친구 퀴즈</title>
 
-    <style>
 
-        body {
 
-            font-family: 'Malgun Gothic', sans-serif;
+<style>
 
-            background-color: #f0f8ff;
+body {
 
-            display: flex;
+    font-family: 'Malgun Gothic', sans-serif;
 
-            justify-content: center;
+    background-color: #f0f8ff;
 
-            align-items: center;
+    display: flex;
 
-            height: 100vh;
+    justify-content: center;
 
-            margin: 0;
+    align-items: center;
 
-        }
+    min-height: 100vh;
 
-        .quiz-container {
+    margin: 0;
 
-            background-color: white;
+}
 
-            padding: 30px;
 
-            border-radius: 15px;
 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+.quiz-container {
 
-            max-width: 500px;
+    background-color: white;
 
-            width: 100%;
+    padding: 30px;
 
-        }
+    border-radius: 15px;
 
-        h1 {
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 
-            text-align: center;
+    max-width: 500px;
 
-            color: #333;
+    width: 100%;
 
-            margin-bottom: 30px;
+}
 
-        }
 
-        .quiz-item {
 
-            margin-bottom: 25px;
+h1 {
 
-            padding: 15px;
+    text-align: center;
 
-            border-bottom: 1px dashed #ccc;
+    color: #333;
 
-        }
+    margin-bottom: 30px;
 
-        .quiz-item:last-child {
+}
 
-            border-bottom: none;
 
-        }
 
-        .question {
+.quiz-item {
 
-            font-size: 18px;
+    margin-bottom: 25px;
 
-            font-weight: bold;
+    padding: 15px;
 
-            color: #2c3e50;
+    border-bottom: 1px dashed #ccc;
 
-            margin-bottom: 10px;
+}
 
-        }
 
-        .answer-box {
 
-            background-color: #eef2f7;
+.question {
 
-            padding: 10px;
+    font-size: 18px;
 
-            border-radius: 8px;
+    font-weight: bold;
 
-            cursor: pointer;
+    margin-bottom: 10px;
 
-            text-align: center;
+}
 
-            transition: all 0.3s ease;
 
-        }
 
-        .answer-box:hover {
+input {
 
-            background-color: #dee2e6;
+    width: 100%;
 
-        }
+    padding: 10px;
 
-        .answer-text {
+    border: 1px solid #ccc;
 
-            display: none;
+    border-radius: 8px;
 
-            font-weight: bold;
+    box-sizing: border-box;
 
-            color: #e74c3c;
+}
 
-            font-size: 18px;
 
-        }
 
-        .hint-text {
+button {
 
-            color: #7f8c8d;
+    margin-top: 10px;
 
-            font-size: 14px;
+    padding: 8px 15px;
 
-        }
+    border: none;
 
-    </style>
+    border-radius: 8px;
+
+    background-color: #3498db;
+
+    color: white;
+
+    cursor: pointer;
+
+}
+
+
+
+button:hover {
+
+    background-color: #2980b9;
+
+}
+
+
+
+.result {
+
+    margin-top: 10px;
+
+    font-weight: bold;
+
+}
+
+</style>
 
 </head>
+
+
 
 <body>
 
@@ -136,7 +152,7 @@
 
 <div class="quiz-container">
 
-    <h1>    우정 테스트 퀴즈 ✨</h1>
+    <h1>✨ 우정 테스트 퀴즈 ✨</h1>
 
 
 
@@ -144,13 +160,11 @@
 
         <div class="question">1번. 얼굴이 가장 동그란 친구는?</div>
 
-        <div class="answer-box" onclick="toggleAnswer('ans1')">
+        <input type="text" id="q1" placeholder="답을 입력하세요">
 
-            <span id="ans1-hint" class="hint-text">정답 보기 (클릭)</span>
+        <button onclick="checkAnswer('q1','이연서','r1')">정답 확인</button>
 
-            <span id="ans1" class="answer-text"> 정답: 이연서</span>
-
-        </div>
+        <div id="r1" class="result"></div>
 
     </div>
 
@@ -160,13 +174,11 @@
 
         <div class="question">2번. 아침에 머리카락이 산발인 친구는?</div>
 
-        <div class="answer-box" onclick="toggleAnswer('ans2')">
+        <input type="text" id="q2" placeholder="답을 입력하세요">
 
-            <span id="ans2-hint" class="hint-text">정답 보기 (클릭)</span>
+        <button onclick="checkAnswer('q2','기선우','r2')">정답 확인</button>
 
-            <span id="ans2" class="answer-text"> 정답: 기선우</span>
-
-        </div>
+        <div id="r2" class="result"></div>
 
     </div>
 
@@ -176,15 +188,15 @@
 
         <div class="question">3번. 쉬는 시간에 가장 조용한 친구는?</div>
 
-        <div class="answer-box" onclick="toggleAnswer('ans3')">
+        <input type="text" id="q3" placeholder="답을 입력하세요">
 
-            <span id="ans3-hint" class="hint-text">정답 보기 (클릭)</span>
+        <button onclick="checkAnswer('q3','김소유','r3')">정답 확인</button>
 
-            <span id="ans3" class="answer-text"> 정답: 김소유</span>
-
-        </div>
+        <div id="r3" class="result"></div>
 
     </div>
+
+
 
 </div>
 
@@ -192,29 +204,29 @@
 
 <script>
 
-    function toggleAnswer(id) {
+function checkAnswer(inputId, correctAnswer, resultId) {
 
-        var answer = document.getElementById(id);
+    const userAnswer = document.getElementById(inputId).value.trim();
 
-        var hint = document.getElementById(id + '-hint');
+    const result = document.getElementById(resultId);
 
-        
 
-        if (answer.style.display === "none" || answer.style.display === "") {
 
-            answer.style.display = "block";
+    if (userAnswer === correctAnswer) {
 
-            hint.style.display = "none";
+        result.innerHTML = "✅ 정답입니다!";
 
-        } else {
+        result.style.color = "green";
 
-            answer.style.display = "none";
+    } else {
 
-            hint.style.display = "block";
+        result.innerHTML = "❌ 틀렸습니다!";
 
-        }
+        result.style.color = "red";
 
     }
+
+}
 
 </script>
 
