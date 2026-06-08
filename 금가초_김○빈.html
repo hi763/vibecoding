@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>똥 피하기 게임 (코인 잘 먹어지는 버전)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            border: 4px solid #333;
+            overflow: hidden;
+            background-color: #b3e5fc;
+        }
+
+        /* 플레이어 (주황색 공) */
+        #player {
+            position: absolute;
+            bottom: 10px;
+            left: 180px;
+            width: 40px;
+            height: 40px;
+            background-color: #ff5722;
+            border-radius: 50%;
+        }
+
+        /* 떨어지는 오브젝트 공통 */
+        .falling-object {
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        /* 똥 */
+        .poop {
+            width: 30px;
+            height: 30px;
+            background-color: #795548;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+        }
+
+        /* 코인 */
+        .coin {
+            width: 30px;
+            height: 30px;
+            background-color: #ffd700;
+            border: 3px solid #ffb300;
+            box-shadow: 0 0 8px #fff700; /* 반짝이는 효과 추가 */
+        }
+
+        /* 상단 상태창 */
+        #scoreboard {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            z-index: 10;
+        }
+
+        /* 게임 오버 화면 */
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+        }
+
+        #restart-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 50px;
+        }
+
+        #restart-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="scoreboard">
+            Score: <span id="score">0</span> | Coins: <span id="coins">0</span>
+        </div>
+        <div id="player"></div>
+        
+        <div id="game-over">
+            <h1>GAME OVER 💩</h1>
+            <p>최종 점수: <span id="final-score">0</span></p>
+            <button id="restart-btn" onclick="startGame()">다시 시작</button>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('game-container');
+        const player = document.getElementById('player');
+        const scoreDisplay = document.getElementById('score');
+        const coinDisplay = document.getElementById('coins');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreDisplay = document.getElementById('final-score');
+
+        // 게임 설정 변수
+        let playerX = 180;
+        const playerSpeed = 20;
+        const containerWidth = 400;
+        
+        let score = 0;
+        let coins = 0;
+        let isGameOver = false;
+        let fallingObjects = [];
+        
+        let spawnInterval;
+        let gameLoopInterval;
+
+        // 키보드 입력 감지 (좌우 이동)
+        document.addEventListener('keydown', (e) => {
+            if (isGameOver) return;
+            
+            if (e.key === 'ArrowLeft' && playerX > 0) {
+                playerX -= playerSpeed;
+            } else if (e.key === 'ArrowRight' && playerX < containerWidth - 40) {
+                playerX += playerSpeed;
+            }
+            player.style.left = playerX + 'px';
+        });
+
+        // 오브젝트 생성 (똥 또는 코인)
+        function createObject() {
+            if (isGameOver) return;
+
+            const obj = document.createElement('div');
+            obj.classList.add('falling-object');
+
+            // 75% 똥, 25% 코인 (코인 확률을 살짝 높였습니다)
+            const isCoin = Math.random() < 0.25; 
+            if (isCoin) {
+                obj.classList.add('coin');
+                obj.dataset.type = 'coin';
+            } else {
+                obj.classList.add('poop');
+                obj.dataset.type = 'poop';
+            }
+
+            const randomX = Math.floor(Math.random() * (containerWidth - 30));
+            obj.style.left = randomX + 'px';
+            obj.style.top = '-40px';
+
+            container.appendChild(obj);
+            
+            fallingObjects.push({
+                element: obj,
+                x: randomX,
+                y: -40,
+                speed: Math.random() * 3 + 4 // 낙하 속도
+            });
+        }
+
+        // 게임 업데이트 루프 (매 프레임 실행)
+        function updateGame() {
+            if (isGameOver) return;
+
+            score++;
+            scoreDisplay.innerText = score;
+
+            // 플레이어 중심점 좌표 계산 (너비 40px, 높이 40px, 바닥에서 10px 위)
+            const playerCenterX = playerX + 20;
+            const playerCenterY = 600 - 10 - 20; // Y축 중심점은 약 570
+
+            for (let i = fallingObjects.length - 1; i >= 0; i--) {
+                const obj = fallingObjects[i];
+                obj.y += obj.speed;
+                obj.element.style.top = obj.y + 'px';
+
+                // 떨어지는 물체의 중심점 좌표 계산 (너비 30px, 높이 30px)
+                const objCenterX = obj.x + 15;
+                const objCenterY = obj.y + 15;
+
+                // 📐 거리 기반 원형 충돌 판정 (가장 정확하고 직관적임)
+                const distX = playerCenterX - objCenterX;
+                const distY = playerCenterY - objCenterY;
+                const distance = Math.sqrt(distX * distX + distY * distY);
+
+                // 두 물체의 중심 거리가 '판정 기준'보다 가까워지면 충돌!
+                if (obj.dataset.type === 'coin') {
+                    // 🌟 코인은 먹기 쉽도록 판정 범위를 넉넉하게 45픽셀로 설정 (자석 효과)
+                    if (distance < 45) {
+                        coins += 1;
+                        score += 500; 
+                        coinDisplay.innerText = coins;
+                        
+                        obj.element.remove();
+                        fallingObjects.splice(i, 1);
+                        continue;
+                    }
+                } else if (obj.dataset.type === 'poop') {
+                    // 💩 똥은 억울하지 않게 캐릭터에 확실히 닿았을 때만(32픽셀 이하) 죽도록 설정
+                    if (distance < 32) {
+                        endGame();
+                        return; 
+                    }
+                }
+
+                // 바닥을 넘어가면 제거
+                if (obj.y > 600) {
+                    obj.element.remove();
+                    fallingObjects.splice(i, 1);
+                }
+            }
+        }
+
+        // 게임 시작 및 초기화 (리스폰)
+        function startGame() {
+            fallingObjects.forEach(obj => obj.element.remove());
+            fallingObjects = [];
+            
+            score = 0;
+            coins = 0;
+            playerX = 180;
+            isGameOver = false;
+            
+            player.style.left = playerX + 'px';
+            scoreDisplay.innerText = score;
+            coinDisplay.innerText = coins;
+            gameOverScreen.style.display = 'none';
+
+            clearInterval(gameLoopInterval);
+            clearInterval(spawnInterval);
+            
+            gameLoopInterval = setInterval(updateGame, 20);
+            spawnInterval = setInterval(createObject, 400);
+        }
+
+        // 게임 오버
+        function endGame() {
+            isGameOver = true;
+            clearInterval(gameLoopInterval);
+            clearInterval(spawnInterval);
+            finalScoreDisplay.innerText = score;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        // 최초 게임 실행
+        startGame();
+    </script>
+</body>
+</html>
