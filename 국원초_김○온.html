@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Project Sekai: Hondon Boogie (혼돈부기)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts & Font Awesome icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,700;0,900;1,900&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    body {
+      font-family: 'Noto Sans KR', 'Montserrat', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      overflow: hidden;
+      background-color: #05060d;
+      color: #fff;
+    }
+
+    /* Radiant Dreamy Neon Glows */
+    .sekai-cyan-glow {
+      box-shadow: 0 0 25px #00f0ff, 0 0 50px rgba(0, 240, 255, 0.6), inset 0 0 15px #00f0ff;
+    }
+    .sekai-pink-glow {
+      box-shadow: 0 0 25px #ff2a8d, 0 0 50px rgba(255, 42, 141, 0.6), inset 0 0 15px #ff2a8d;
+    }
+    .sekai-gold-glow {
+      box-shadow: 0 0 25px #ffe600, 0 0 60px rgba(255, 230, 0, 0.8), inset 0 0 20px #ffe600;
+    }
+    .text-glow-cyan {
+      text-shadow: 0 0 12px #00f0ff, 0 0 25px #00f0ff, 0 0 40px #00f0ff;
+    }
+    .text-glow-pink {
+      text-shadow: 0 0 12px #ff2a8d, 0 0 25px #ff2a8d, 0 0 40px #ff2a8d;
+    }
+    .text-glow-gold {
+      text-shadow: 0 0 15px #ffe600, 0 0 30px #ffea00, 0 0 50px #ffaa00;
+    }
+
+    /* Ambient Pulsing Glow */
+    @keyframes ambientPulse {
+      0%, 100% { opacity: 0.4; filter: blur(30px); }
+      50% { opacity: 0.85; filter: blur(45px); }
+    }
+    .animate-ambient {
+      animation: ambientPulse 4s ease-in-out infinite;
+    }
+
+    /* Sekai Judgment Animations */
+    @keyframes popIn {
+      0% { transform: scale(0.5) translateY(15px); opacity: 0; filter: drop-shadow(0 0 20px #00f0ff); }
+      40% { transform: scale(1.35) translateY(-8px); opacity: 1; filter: drop-shadow(0 0 35px #ffe600); }
+      70% { transform: scale(0.95) translateY(0); opacity: 1; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .animate-pop {
+      animation: popIn 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    /* Custom Sekai Button Style */
+    .sekai-btn {
+      position: relative;
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.95), rgba(120, 0, 255, 0.9));
+      border: 2px solid #ffffff;
+      transform: skewX(-12deg);
+      transition: all 0.15s ease-in-out;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.5);
+    }
+    .sekai-btn:hover {
+      transform: skewX(-12deg) scale(1.05);
+      box-shadow: 0 0 40px rgba(0, 240, 255, 0.9), inset 0 0 20px rgba(255, 255, 255, 0.8);
+    }
+    .sekai-btn:active {
+      transform: skewX(-12deg) scale(0.96);
+    }
+    .sekai-btn-inner {
+      transform: skewX(12deg);
+    }
+
+    .sekai-btn-pink {
+      background: linear-gradient(135deg, rgba(255, 42, 141, 0.95), rgba(255, 120, 0, 0.9));
+      box-shadow: 0 0 25px rgba(255, 42, 141, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.5);
+    }
+    .sekai-btn-pink:hover {
+      box-shadow: 0 0 40px rgba(255, 42, 141, 0.9), inset 0 0 20px rgba(255, 255, 255, 0.8);
+    }
+
+    /* Canvas styling */
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Screen overlays */
+    .overlay-screen {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+  </style>
+</head>
+<body class="w-screen h-screen relative select-none">
+
+  <!-- Ambient Ethereal Glow Background Blobs -->
+  <div class="absolute -top-20 -left-20 w-96 h-96 bg-cyan-500/30 rounded-full animate-ambient pointer-events-none z-0"></div>
+  <div class="absolute -bottom-20 -right-20 w-96 h-96 bg-pink-500/30 rounded-full animate-ambient pointer-events-none z-0" style="animation-delay: 2s;"></div>
+
+  <!-- ========================================== -->
+  <!-- RHYTHM GAME CANVAS SCREEN                  -->
+  <!-- ========================================== -->
+  <div id="game-container" class="absolute inset-0 w-full h-full z-0 overflow-hidden">
+    <canvas id="rhythm-canvas"></canvas>
+    
+    <!-- In-Game HUD UI (Project Sekai Style) -->
+    <div id="game-hud" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-4 md:p-6 hidden z-10">
+      
+      <!-- Top HUD Header -->
+      <div class="flex justify-between items-start w-full">
+        <!-- Left: Song Info & Pause -->
+        <div class="flex items-center space-x-3 pointer-events-auto">
+          <button id="btn-pause" class="w-10 h-10 rounded-full bg-slate-900/80 border-2 border-cyan-400 text-cyan-300 flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.5)] hover:bg-cyan-500 hover:text-white transition">
+            <i class="fa-solid fa-pause text-lg"></i>
+          </button>
+          <div>
+            <div class="text-xs font-bold text-cyan-400 tracking-wider text-glow-cyan">PROJECT SEKAI</div>
+            <div class="text-base md:text-lg font-black text-white drop-shadow-[0_2px_8px_rgba(0,240,255,0.8)]">혼돈부기 (Hondon Boogie)</div>
+          </div>
+        </div>
+
+        <!-- Center: Life Bar & Fever Gauge -->
+        <div class="flex flex-col items-center w-1/3 max-w-xs">
+          <!-- Life Bar -->
+          <div class="w-full bg-slate-900/80 border-2 border-emerald-400/80 rounded-full h-5 p-0.5 relative overflow-hidden flex items-center shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+            <div id="life-bar-fill" class="h-full bg-gradient-to-r from-emerald-400 via-green-300 to-cyan-300 rounded-full transition-all duration-100" style="width: 100%;"></div>
+            <div class="absolute inset-0 flex items-center justify-between px-3 text-[11px] font-black text-white drop-shadow">
+              <span>LIFE</span>
+              <span id="life-text">1000 / 1000</span>
+            </div>
+          </div>
+          <!-- Fever Gauge -->
+          <div class="w-4/5 bg-slate-900/80 border border-amber-400/60 rounded-full h-2 mt-1 relative overflow-hidden shadow-[0_0_10px_rgba(251,191,36,0.3)]">
+            <div id="fever-bar-fill" class="h-full bg-gradient-to-r from-amber-400 to-yellow-200 rounded-full transition-all duration-200" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Right: Score Display -->
+        <div class="text-right">
+          <div class="text-xs font-bold text-cyan-300 tracking-wider">SCORE</div>
+          <div id="score-text" class="text-2xl md:text-3xl font-black text-white tracking-wider font-mono text-glow-cyan">0000000</div>
+        </div>
+      </div>
+
+      <!-- Center HUD: Combo & Judgment Popups -->
+      <div class="absolute inset-x-0 top-1/3 flex flex-col items-center justify-center pointer-events-none">
+        <!-- Judgment Text -->
+        <div id="judgment-popup" class="text-3xl md:text-5xl font-black tracking-widest uppercase opacity-0 transition-all duration-75">
+          PERFECT
+        </div>
+        <!-- Early / Late Timing Sub-indicator -->
+        <div id="timing-popup" class="text-xs md:text-sm font-black tracking-widest uppercase opacity-0 -mt-1 font-mono">
+          LATE
+        </div>
+        <!-- Combo Display -->
+        <div id="combo-container" class="flex flex-col items-center mt-2 opacity-0 transition-all duration-100">
+          <span id="combo-count" class="text-5xl md:text-7xl font-black italic text-cyan-300 text-glow-cyan font-mono">0</span>
+          <span class="text-xs font-bold tracking-widest text-pink-300 uppercase -mt-1 text-glow-pink">COMBO</span>
+        </div>
+      </div>
+
+      <!-- Bottom Touch Hit Area (Mobile Tap Hotspots & Desktop Lane Labels) -->
+      <div class="w-full flex justify-center pb-2 pointer-events-auto">
+        <div class="w-full max-w-2xl grid grid-cols-4 gap-3 h-24">
+          <button id="touch-lane-0" class="lane-touch-btn rounded-2xl bg-cyan-500/10 border-2 border-cyan-400/80 hover:bg-cyan-500/20 active:scale-95 active:bg-cyan-400/40 transition flex items-end justify-center pb-2 text-cyan-300 font-bold text-xl select-none shadow-[0_0_20px_rgba(0,240,255,0.25)]">
+            <span class="bg-black/70 px-4 py-1 rounded-xl border border-cyan-400 text-glow-cyan shadow-[0_0_12px_rgba(0,240,255,0.6)]">D</span>
+          </button>
+          <button id="touch-lane-1" class="lane-touch-btn rounded-2xl bg-cyan-500/10 border-2 border-cyan-400/80 hover:bg-cyan-500/20 active:scale-95 active:bg-cyan-400/40 transition flex items-end justify-center pb-2 text-cyan-300 font-bold text-xl select-none shadow-[0_0_20px_rgba(0,240,255,0.25)]">
+            <span class="bg-black/70 px-4 py-1 rounded-xl border border-cyan-400 text-glow-cyan shadow-[0_0_12px_rgba(0,240,255,0.6)]">F</span>
+          </button>
+          <button id="touch-lane-2" class="lane-touch-btn rounded-2xl bg-cyan-500/10 border-2 border-cyan-400/80 hover:bg-cyan-500/20 active:scale-95 active:bg-cyan-400/40 transition flex items-end justify-center pb-2 text-cyan-300 font-bold text-xl select-none shadow-[0_0_20px_rgba(0,240,255,0.25)]">
+            <span class="bg-black/70 px-4 py-1 rounded-xl border border-cyan-400 text-glow-cyan shadow-[0_0_12px_rgba(0,240,255,0.6)]">J</span>
+          </button>
+          <button id="touch-lane-3" class="lane-touch-btn rounded-2xl bg-cyan-500/10 border-2 border-cyan-400/80 hover:bg-cyan-500/20 active:scale-95 active:bg-cyan-400/40 transition flex items-end justify-center pb-2 text-cyan-300 font-bold text-xl select-none shadow-[0_0_20px_rgba(0,240,255,0.25)]">
+            <span class="bg-black/70 px-4 py-1 rounded-xl border border-cyan-400 text-glow-cyan shadow-[0_0_12px_rgba(0,240,255,0.6)]">K</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- MAIN SONG SELECT MENU OVERLAY              -->
+  <!-- ========================================== -->
+  <div id="screen-main-menu" class="absolute inset-0 z-10 flex flex-col justify-between p-6 bg-slate-950/90 overlay-screen">
+    
+    <!-- Top Header -->
+    <div class="flex justify-between items-center w-full border-b border-cyan-500/30 pb-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xl font-black shadow-lg">
+          <i class="fa-solid fa-music"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-black tracking-wider text-white text-glow-cyan">PROJECT SEKAI</h1>
+          <p class="text-xs text-cyan-400 font-semibold tracking-widest">COLORFUL STAGE! FEAT. HONDON BOOGIE</p>
+        </div>
+      </div>
+      
+      <!-- Player Info Badge -->
+      <div class="flex items-center space-x-4 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-700">
+        <i class="fa-solid fa-user-ninja text-cyan-400 text-xl"></i>
+        <div>
+          <div class="text-xs text-slate-400">PLAYER</div>
+          <div class="text-sm font-bold text-white">SEKAI_PLAYER_01</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Content: Song Jacket & Details -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center my-auto max-w-6xl mx-auto w-full">
+      
+      <!-- Song Illustration / Jacket Cover -->
+      <div class="md:col-span-5 flex flex-col items-center">
+        <div class="relative group w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden border-4 border-cyan-400/80 shadow-[0_0_30px_rgba(0,240,255,0.4)]">
+          <!-- Dynamic SVG Vector Jacket Art for Hondon Boogie -->
+          <svg class="w-full h-full bg-slate-900" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="300" height="300" fill="url(#bg-grad)"/>
+            <defs>
+              <linearGradient id="bg-grad" x1="0" y1="0" x2="300" y2="300" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#050b14"/>
+                <stop offset="0.5" stop-color="#1a0b2e"/>
+                <stop offset="1" stop-color="#002b45"/>
+              </linearGradient>
+            </defs>
+            <!-- Background Graphic Elements -->
+            <circle cx="150" cy="150" r="110" stroke="#00f0ff" stroke-width="3" stroke-dasharray="10 6" opacity="0.6"/>
+            <circle cx="150" cy="150" r="85" stroke="#ff2a8d" stroke-width="2" opacity="0.8"/>
+            <path d="M50 250 L150 50 L250 250 Z" stroke="#ffe600" stroke-width="3" opacity="0.4" fill="none"/>
+            <!-- Vocaloid Stylized Face Silhouette -->
+            <path d="M120 120 C120 90, 180 90, 180 120 C180 160, 150 180, 150 210" stroke="#00f0ff" stroke-width="8" stroke-linecap="round"/>
+            <circle cx="150" cy="225" r="6" fill="#ff2a8d"/>
+            <text x="150" y="100" text-anchor="middle" fill="#ffffff" font-size="28" font-weight="900" font-family="'Noto Sans KR', sans-serif">혼돈부기</text>
+            <text x="150" y="125" text-anchor="middle" fill="#00f0ff" font-size="14" font-weight="700" letter-spacing="2">HONDON BOOGIE</text>
+            <text x="150" y="260" text-anchor="middle" fill="#ff2a8d" font-size="12" font-weight="bold">jon-YAKITORY feat. Hatsune Miku</text>
+          </svg>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
+            <span class="bg-cyan-500 text-black font-black text-xs px-2.5 py-1 rounded-md">Vocaloid Music</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Song Details & Difficulty Selection -->
+      <div class="md:col-span-7 flex flex-col justify-center space-y-6">
+        <div>
+          <div class="inline-block px-3 py-1 rounded-md bg-pink-500/20 border border-pink-500/50 text-pink-400 font-bold text-xs mb-2">
+            FEATURED SONG
+          </div>
+          <h2 class="text-4xl md:text-5xl font-black text-white tracking-wide">혼돈부기 (Chaos Boogie)</h2>
+          <p class="text-slate-400 font-semibold text-sm mt-1">jon-YAKITORY feat. 初音ミク (Hatsune Miku)</p>
+        </div>
+
+        <!-- BPM & Stats info -->
+        <div class="flex items-center space-x-6 text-sm text-slate-300 border-y border-slate-800 py-3">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-gauge-high text-cyan-400"></i>
+            <span>BPM: <strong class="text-white">170</strong></span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-clock text-cyan-400"></i>
+            <span>Length: <strong class="text-white">1:30</strong></span>
+          </div>
+        </div>
+
+        <!-- Difficulty Selector -->
+        <div>
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Select Difficulty</label>
+          <div class="grid grid-cols-5 gap-2">
+            <button class="diff-btn py-3 rounded-lg border-2 font-black text-xs transition border-blue-500 bg-blue-500/10 text-blue-400 hover:bg-blue-500/30" data-diff="EASY">
+              EASY<br><span class="text-lg">Lv.7</span>
+            </button>
+            <button class="diff-btn py-3 rounded-lg border-2 font-black text-xs transition border-green-500 bg-green-500/10 text-green-400 hover:bg-green-500/30" data-diff="NORMAL">
+              NORMAL<br><span class="text-lg">Lv.14</span>
+            </button>
+            <button class="diff-btn py-3 rounded-lg border-2 font-black text-xs transition border-yellow-500 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/30" data-diff="HARD">
+              HARD<br><span class="text-lg">Lv.19</span>
+            </button>
+            <button class="diff-btn py-3 rounded-lg border-2 font-black text-xs transition border-pink-500 bg-pink-500/10 text-pink-400 hover:bg-pink-500/30 ring-2 ring-pink-400" data-diff="EXPERT">
+              EXPERT<br><span class="text-lg">Lv.26</span>
+            </button>
+            <button class="diff-btn py-3 rounded-lg border-2 font-black text-xs transition border-purple-500 bg-purple-500/10 text-purple-400 hover:bg-purple-500/30" data-diff="MASTER">
+              MASTER<br><span class="text-lg">Lv.31</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Start Button -->
+        <div class="pt-4">
+          <button id="btn-start-game" class="sekai-btn w-full py-4 rounded-xl text-2xl font-black text-white flex items-center justify-center space-x-3 cursor-pointer">
+            <span class="sekai-btn-inner flex items-center space-x-3">
+              <i class="fa-solid fa-play"></i>
+              <span>GAME START</span>
+            </span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Footer Controls Bar -->
+    <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800 pt-3">
+      <div>Controls: Key <strong class="text-cyan-400">D, F, J, K</strong> or Touch Screen Lanes</div>
+      <div>Project Sekai Engine v2.5 • Synthesis Web Audio Synth</div>
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- PAUSE MENU OVERLAY                         -->
+  <!-- ========================================== -->
+  <div id="screen-pause" class="absolute inset-0 z-20 hidden flex-col items-center justify-center bg-black/80 overlay-screen">
+    <div class="bg-slate-900/90 border-2 border-cyan-400/60 rounded-2xl p-8 max-w-md w-full text-center shadow-[0_0_40px_rgba(0,240,255,0.3)]">
+      <h2 class="text-3xl font-black text-white tracking-widest text-glow-cyan mb-2">PAUSED</h2>
+      <p class="text-slate-400 text-sm mb-6">Take a breath and continue when ready!</p>
+
+      <div class="space-y-4">
+        <button id="btn-resume" class="sekai-btn w-full py-3 rounded-xl text-lg font-black text-white">
+          <span class="sekai-btn-inner">RESUME</span>
+        </button>
+        <button id="btn-restart" class="w-full py-3 rounded-xl bg-slate-800 border border-slate-600 hover:bg-slate-700 font-bold text-white transition">
+          RESTART
+        </button>
+        <button id="btn-quit" class="w-full py-3 rounded-xl bg-red-950/80 border border-red-600/60 hover:bg-red-900 font-bold text-red-300 transition">
+          QUIT TO MENU
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- RESULT SCREEN OVERLAY                      -->
+  <!-- ========================================== -->
+  <div id="screen-result" class="absolute inset-0 z-30 hidden flex-col justify-between p-6 bg-slate-950/95 overlay-screen overflow-y-auto">
+    <div class="max-w-4xl mx-auto w-full my-auto py-6">
+      
+      <!-- Top Title -->
+      <div class="text-center mb-8">
+        <span class="bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 text-xs font-bold px-3 py-1 rounded-full">STAGE CLEAR</span>
+        <h1 class="text-4xl md:text-5xl font-black text-white tracking-wider mt-2">SHOW RESULT</h1>
+      </div>
+
+      <!-- Result Card Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+        
+        <!-- Left: Rank Badge -->
+        <div class="md:col-span-5 flex flex-col items-center justify-center bg-slate-900/80 rounded-2xl border-2 border-cyan-500/40 p-6 relative overflow-hidden">
+          <div class="text-xs font-bold text-slate-400 mb-2">SCORE RANK</div>
+          <div id="result-rank-badge" class="text-8xl md:text-9xl font-black italic text-yellow-400 text-glow-gold my-2 transform hover:scale-105 transition">
+            S
+          </div>
+          <div id="result-score" class="text-3xl font-black text-white font-mono mt-2">
+            0000000
+          </div>
+          <div id="result-high-score-tag" class="hidden text-xs bg-amber-400 text-black font-black px-2 py-0.5 rounded mt-1">
+            NEW HIGH SCORE!
+          </div>
+        </div>
+
+        <!-- Right: Stats Breakdown -->
+        <div class="md:col-span-7 bg-slate-900/80 rounded-2xl border border-slate-700 p-6 space-y-4">
+          <!-- Max Combo Bar -->
+          <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <span class="text-slate-400 font-bold text-sm">MAX COMBO</span>
+            <span id="result-max-combo" class="text-2xl font-black text-cyan-300 font-mono">0</span>
+          </div>
+
+          <!-- Judgment Details -->
+          <div class="space-y-2 pt-2">
+            <div class="flex justify-between items-center bg-slate-800/50 px-4 py-2 rounded-lg border-l-4 border-yellow-400">
+              <span class="font-bold text-yellow-400 text-sm">PERFECT</span>
+              <span id="stat-perfect" class="font-black text-white font-mono text-lg">0</span>
+            </div>
+            <div class="flex justify-between items-center bg-slate-800/50 px-4 py-2 rounded-lg border-l-4 border-pink-400">
+              <span class="font-bold text-pink-400 text-sm">GREAT</span>
+              <span id="stat-great" class="font-black text-white font-mono text-lg">0</span>
+            </div>
+            <div class="flex justify-between items-center bg-slate-800/50 px-4 py-2 rounded-lg border-l-4 border-green-400">
+              <span class="font-bold text-green-400 text-sm">GOOD</span>
+              <span id="stat-good" class="font-black text-white font-mono text-lg">0</span>
+            </div>
+            <div class="flex justify-between items-center bg-slate-800/50 px-4 py-2 rounded-lg border-l-4 border-slate-500">
+              <span class="font-bold text-slate-400 text-sm">MISS</span>
+              <span id="stat-miss" class="font-black text-white font-mono text-lg">0</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Action Buttons -->
+      <div class="flex space-x-4 mt-8 max-w-md mx-auto">
+        <button id="btn-result-retry" class="w-1/2 py-3.5 rounded-xl bg-slate-800 border border-slate-600 hover:bg-slate-700 font-bold text-white transition text-center">
+          RETRY
+        </button>
+        <button id="btn-result-menu" class="sekai-btn sekai-btn-pink w-1/2 py-3.5 rounded-xl font-black text-white text-center">
+          <span class="sekai-btn-inner">SELECT SONG</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- GAME ENGINE & SYNTHESIS LOGIC (JS)         -->
+  <!-- ========================================== -->
+  <script>
+    /**
+     * Project Sekai Rhythm Engine
+     * 'Hondon Boogie' Synth Sound Track & Procedural Beat generator
+     */
+
+    // --- Web Audio Synthesizer for Audio Engine ---
+    class SekaiAudioSynth {
+      constructor() {
+        this.ctx = null;
+        this.isPlaying = false;
+        this.bpm = 170;
+        this.startTime = 0;
+        this.pauseOffset = 0;
+        this.timerId = null;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playHitSound(type = 'tap') {
+        if (!this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          if (type === 'tap') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(880, now);
+            osc.frequency.exponentialRampToValueAtTime(220, now + 0.05);
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+            osc.start(now);
+            osc.stop(now + 0.05);
+          } else if (type === 'flick') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1200, now);
+            osc.frequency.exponentialRampToValueAtTime(2400, now + 0.08);
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+            osc.start(now);
+            osc.stop(now + 0.08);
+          } else if (type === 'hold') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, now);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
+            osc.start(now);
+            osc.stop(now + 0.04);
+          }
+        } catch (e) {
+          // Fallback if audio fails
+        }
+      }
+
+      startSong(onTickCallback) {
+        this.init();
+        this.isPlaying = true;
+        this.startTime = performance.now() / 1000;
+        this.pauseOffset = 0;
+        
+        const beatInterval = 60 / this.bpm;
+        let beatCount = 0;
+
+        const scheduleBeat = () => {
+          if (!this.isPlaying) return;
+          if (!this.ctx) return;
+
+          try {
+            const time = this.ctx.currentTime;
+
+            // Kick synth
+            if (beatCount % 2 === 0) {
+              const kickOsc = this.ctx.createOscillator();
+              const kickGain = this.ctx.createGain();
+              kickOsc.connect(kickGain);
+              kickGain.connect(this.ctx.destination);
+              kickOsc.frequency.setValueAtTime(140, time);
+              kickOsc.frequency.exponentialRampToValueAtTime(30, time + 0.12);
+              kickGain.gain.setValueAtTime(0.5, time);
+              kickGain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
+              kickOsc.start(time);
+              kickOsc.stop(time + 0.12);
+            }
+
+            // Snare
+            if (beatCount % 4 === 2) {
+              const snareGain = this.ctx.createGain();
+              snareGain.connect(this.ctx.destination);
+              snareGain.gain.setValueAtTime(0.18, time);
+              snareGain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+              
+              const bufferSize = this.ctx.sampleRate * 0.08;
+              const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+              const data = buffer.getChannelData(0);
+              for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+              const noise = this.ctx.createBufferSource();
+              noise.buffer = buffer;
+              noise.connect(snareGain);
+              noise.start(time);
+            }
+
+            // Electro Melody Synth
+            const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25];
+            const freq = notes[beatCount % notes.length];
+            const leadOsc = this.ctx.createOscillator();
+            const leadGain = this.ctx.createGain();
+            leadOsc.type = 'sawtooth';
+            leadOsc.frequency.setValueAtTime(freq, time);
+            leadOsc.connect(leadGain);
+            leadGain.connect(this.ctx.destination);
+            leadGain.gain.setValueAtTime(0.06, time);
+            leadGain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+            leadOsc.start(time);
+            leadOsc.stop(time + 0.15);
+
+            beatCount++;
+          } catch(e) {}
+        };
+
+        if (this.timerId) clearInterval(this.timerId);
+        this.timerId = setInterval(scheduleBeat, (beatInterval / 2) * 1000);
+      }
+
+      stopSong() {
+        this.isPlaying = false;
+        if (this.timerId) {
+          clearInterval(this.timerId);
+          this.timerId = null;
+        }
+      }
+
+      getCurrentTime() {
+        if (!this.isPlaying) return 0;
+        return (performance.now() / 1000) - this.startTime - this.pauseOffset;
+      }
+    }
+
+    // --- Rhythm Game Controller & Renderer ---
+    class ProSekaGame {
+      constructor() {
+        this.canvas = document.getElementById('rhythm-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.synth = new SekaiAudioSynth();
+
+        this.selectedDifficulty = 'EXPERT';
+        this.gameState = 'MENU'; // MENU, PLAYING, PAUSED, RESULT
+        this.score = 0;
+        this.combo = 0;
+        this.maxCombo = 0;
+        this.life = 1000;
+        
+        this.stats = { perfect: 0, great: 0, good: 0, miss: 0 };
+
+        this.notes = [];
+        this.particles = [];
+        this.shockwaves = [];
+        this.scorePopups = [];
+        this.lanePressEffects = [0, 0, 0, 0];
+        this.ambientBokeh = [];
+
+        this.songDuration = 60; // 60 seconds rhythm map
+
+        this.initCanvasSize();
+        this.initBokeh();
+        this.bindEvents();
+      }
+
+      initCanvasSize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
+
+      initBokeh() {
+        this.ambientBokeh = [];
+        for (let i = 0; i < 35; i++) {
+          this.ambientBokeh.push({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            radius: 4 + Math.random() * 25,
+            vx: (Math.random() - 0.5) * 0.5,
+            vy: -0.3 - Math.random() * 0.7,
+            alpha: 0.1 + Math.random() * 0.4,
+            color: Math.random() > 0.5 ? '#00f0ff' : (Math.random() > 0.5 ? '#ff2a8d' : '#ffe600')
+          });
+        }
+      }
+
+      bindEvents() {
+        window.addEventListener('resize', () => this.initCanvasSize());
+
+        // Keyboard keybindings: D, F, J, K
+        const keyMap = { 'd': 0, 'D': 0, 'f': 1, 'F': 1, 'j': 2, 'J': 2, 'k': 3, 'K': 3 };
+        window.addEventListener('keydown', (e) => {
+          if (this.gameState === 'PLAYING' && keyMap[e.key] !== undefined) {
+            this.handleLanePress(keyMap[e.key]);
+          }
+        });
+
+        // Touch & Mouse bindings for screen target lanes
+        for (let i = 0; i < 4; i++) {
+          const btn = document.getElementById(`touch-lane-${i}`);
+          if (btn) {
+            const triggerHit = (e) => {
+              e.preventDefault();
+              if (this.gameState === 'PLAYING') {
+                this.handleLanePress(i);
+              }
+            };
+            btn.addEventListener('touchstart', triggerHit, { passive: false });
+            btn.addEventListener('mousedown', triggerHit);
+          }
+        }
+      }
+
+      startGame() {
+        this.score = 0;
+        this.combo = 0;
+        this.maxCombo = 0;
+        this.life = 1000;
+        this.stats = { perfect: 0, great: 0, good: 0, miss: 0 };
+        this.particles = [];
+        this.shockwaves = [];
+        this.scorePopups = [];
+
+        this.generateBeatMap();
+        this.updateHUD();
+
+        document.getElementById('screen-main-menu').classList.add('hidden');
+        document.getElementById('screen-pause').classList.add('hidden');
+        document.getElementById('screen-result').classList.add('hidden');
+        document.getElementById('game-hud').classList.remove('hidden');
+
+        this.gameState = 'PLAYING';
+        this.synth.startSong();
+        requestAnimationFrame((time) => this.gameLoop(time));
+      }
+
+      pauseGame() {
+        if (this.gameState !== 'PLAYING') return;
+        this.gameState = 'PAUSED';
+        this.synth.stopSong();
+        document.getElementById('screen-pause').classList.remove('hidden');
+        document.getElementById('screen-pause').classList.add('flex');
+      }
+
+      resumeGame() {
+        if (this.gameState !== 'PAUSED') return;
+        document.getElementById('screen-pause').classList.add('hidden');
+        document.getElementById('screen-pause').classList.remove('flex');
+        this.gameState = 'PLAYING';
+        this.synth.startSong();
+        requestAnimationFrame((time) => this.gameLoop(time));
+      }
+
+      endGame() {
+        this.gameState = 'RESULT';
+        this.synth.stopSong();
+
+        document.getElementById('game-hud').classList.add('hidden');
+        document.getElementById('screen-result').classList.remove('hidden');
+        document.getElementById('screen-result').classList.add('flex');
+
+        // Score Rank Calculation
+        let rank = 'C';
+        if (this.score > 250000) rank = 'S';
+        else if (this.score > 180000) rank = 'A';
+        else if (this.score > 120000) rank = 'B';
+
+        const rankBadge = document.getElementById('result-rank-badge');
+        rankBadge.innerText = rank;
+
+        document.getElementById('result-score').innerText = String(this.score).padStart(7, '0');
+        document.getElementById('result-max-combo').innerText = this.maxCombo;
+        document.getElementById('stat-perfect').innerText = this.stats.perfect;
+        document.getElementById('stat-great').innerText = this.stats.great;
+        document.getElementById('stat-good').innerText = this.stats.good;
+        document.getElementById('stat-miss').innerText = this.stats.miss;
+      }
+
+      updateHUD() {
+        document.getElementById('score-text').innerText = String(this.score).padStart(7, '0');
+        document.getElementById('life-text').innerText = `${this.life} / 1000`;
+        const lifeFill = document.getElementById('life-bar-fill');
+        if (lifeFill) lifeFill.style.width = `${(this.life / 1000) * 100}%`;
+
+        const feverFill = document.getElementById('fever-bar-fill');
+        if (feverFill) feverFill.style.width = `${Math.min(100, (this.combo / 50) * 100)}%`;
+
+        const comboContainer = document.getElementById('combo-container');
+        const comboCount = document.getElementById('combo-count');
+        if (comboContainer && comboCount) {
+          if (this.combo > 1) {
+            comboCount.innerText = this.combo;
+            comboContainer.style.opacity = '1';
+          } else {
+            comboContainer.style.opacity = '0';
+          }
+        }
+      }
+
+      showJudgmentPopup(judgment, timingText = '') {
+        const popup = document.getElementById('judgment-popup');
+        const timingPopup = document.getElementById('timing-popup');
+
+        if (!popup) return;
+
+        popup.className = 'text-3xl md:text-5xl font-black tracking-widest uppercase animate-pop ';
+        if (judgment === 'CRITICAL PERFECT') {
+          popup.innerText = 'CRITICAL PERFECT';
+          popup.className += 'text-yellow-300 text-glow-gold';
+        } else if (judgment === 'PERFECT') {
+          popup.innerText = 'PERFECT';
+          popup.className += 'text-cyan-300 text-glow-cyan';
+        } else if (judgment === 'GREAT') {
+          popup.innerText = 'GREAT';
+          popup.className += 'text-pink-400 text-glow-pink';
+        } else if (judgment === 'GOOD') {
+          popup.innerText = 'GOOD';
+          popup.className += 'text-emerald-400';
+        } else {
+          popup.innerText = 'MISS';
+          popup.className += 'text-slate-500';
+        }
+
+        popup.style.opacity = '1';
+
+        if (timingPopup) {
+          if (timingText) {
+            timingPopup.innerText = timingText;
+            timingPopup.className = `text-xs md:text-sm font-black tracking-widest uppercase font-mono opacity-100 ${timingText === 'EARLY' ? 'text-pink-400' : 'text-cyan-400'}`;
+          } else {
+            timingPopup.style.opacity = '0';
+          }
+        }
+
+        clearTimeout(this.popupTimer);
+        this.popupTimer = setTimeout(() => {
+          if (popup) popup.style.opacity = '0';
+          if (timingPopup) timingPopup.style.opacity = '0';
+        }, 550);
+      }
+
+      spawnScorePopup(lane, text) {
+        const canvasW = this.canvas.width;
+        const canvasH = this.canvas.height;
+        const hitY = canvasH * 0.82;
+        const laneX = (canvasW / 2) + (lane - 1.5) * (canvasW * 0.18);
+
+        this.scorePopups.push({
+          x: laneX,
+          y: hitY - 20,
+          text: text,
+          alpha: 1.0
+        });
+      }
+
+      renderParticles() {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.25; // gravity
+          p.alpha -= 0.03;
+
+          if (p.alpha <= 0) {
+            this.particles.splice(i, 1);
+            continue;
+          }
+
+          this.ctx.save();
+          this.ctx.globalAlpha = p.alpha;
+          this.ctx.beginPath();
+          this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          this.ctx.fillStyle = p.color;
+          this.ctx.shadowColor = p.color;
+          this.ctx.shadowBlur = 12;
+          this.ctx.fill();
+          this.ctx.restore();
+        }
+      }
+
+      // Generate Procedural Beat map with lowered difficulty density
+      generateBeatMap() {
+        this.notes = [];
+        const laneCount = 4;
+        const duration = this.songDuration;
+        
+        let density = 0.55;
+        if (this.selectedDifficulty === 'EASY') density = 1.2;
+        if (this.selectedDifficulty === 'NORMAL') density = 0.85;
+        if (this.selectedDifficulty === 'HARD') density = 0.60;
+        if (this.selectedDifficulty === 'EXPERT') density = 0.42;
+        if (this.selectedDifficulty === 'MASTER') density = 0.30;
+
+        let noteId = 0;
+        for (let time = 2.0; time < duration; time += density) {
+          const lane = Math.floor(Math.random() * laneCount);
+          
+          let type = 0;
+          const rand = Math.random();
+          if (rand > 0.80) type = 1; // Flick
+          else if (rand > 0.68) type = 2; // Hold
+
+          const holdLength = type === 2 ? (0.3 + Math.random() * 0.4) : 0;
+
+          this.notes.push({
+            id: noteId++,
+            lane: lane,
+            time: time,
+            type: type,
+            duration: holdLength,
+            hit: false,
+            missed: false
+          });
+        }
+      }
+
+      // Relaxed timing windows for hitting notes easily
+      handleLanePress(lane) {
+        this.lanePressEffects[lane] = 1.0;
+        const songTime = this.synth.getCurrentTime();
+
+        const btn = document.getElementById(`touch-lane-${lane}`);
+        if (btn) {
+          btn.classList.add('bg-cyan-300/60', 'scale-95', 'shadow-[0_0_30px_#00f0ff]');
+          setTimeout(() => btn.classList.remove('bg-cyan-300/60', 'scale-95', 'shadow-[0_0_30px_#00f0ff]'), 120);
+        }
+
+        let targetNote = null;
+        let minDiff = Infinity;
+        let rawDiff = 0;
+
+        for (let note of this.notes) {
+          if (note.lane === lane && !note.hit && !note.missed) {
+            const diff = Math.abs(note.time - songTime);
+            if (diff < minDiff && diff < 0.35) {
+              minDiff = diff;
+              rawDiff = note.time - songTime;
+              targetNote = note;
+            }
+          }
+        }
+
+        if (targetNote) {
+          targetNote.hit = true;
+          let judgment = 'PERFECT';
+          let points = 1000;
+          let timingText = '';
+
+          if (minDiff < 0.08) {
+            judgment = 'CRITICAL PERFECT';
+            points = 1200;
+            this.stats.perfect++;
+          } else if (minDiff < 0.16) {
+            judgment = 'PERFECT';
+            points = 1000;
+            this.stats.perfect++;
+            timingText = rawDiff < 0 ? 'LATE' : 'EARLY';
+          } else if (minDiff < 0.26) {
+            judgment = 'GREAT';
+            points = 700;
+            this.stats.great++;
+            timingText = rawDiff < 0 ? 'LATE' : 'EARLY';
+          } else {
+            judgment = 'GOOD';
+            points = 400;
+            this.stats.good++;
+            timingText = rawDiff < 0 ? 'LATE' : 'EARLY';
+          }
+
+          this.combo++;
+          if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+          this.score += points + Math.floor(this.combo * 15);
+
+          const soundType = targetNote.type === 1 ? 'flick' : (targetNote.type === 2 ? 'hold' : 'tap');
+          this.synth.playHitSound(soundType);
+          this.spawnHitParticles(lane, targetNote.type);
+          this.spawnShockwave(lane, targetNote.type);
+          this.spawnScorePopup(lane, `+${points}`);
+          this.showJudgmentPopup(judgment, timingText);
+          this.updateHUD();
+        }
+      }
+
+      spawnHitParticles(lane, type) {
+        const canvasW = this.canvas.width;
+        const canvasH = this.canvas.height;
+        const hitY = canvasH * 0.82;
+        const laneX = (canvasW / 2) + (lane - 1.5) * (canvasW * 0.18);
+
+        const color = type === 1 ? '#ff2a8d' : (type === 2 ? '#ffe600' : '#00f0ff');
+
+        for (let i = 0; i < 35; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 5 + Math.random() * 15;
+          this.particles.push({
+            x: laneX,
+            y: hitY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - (type === 1 ? 7 : 3),
+            radius: 4 + Math.random() * 7,
+            color: Math.random() > 0.3 ? color : '#ffffff',
+            alpha: 1.0,
+            sparkle: true
+          });
+        }
+      }
+
+      spawnShockwave(lane, type) {
+        const canvasW = this.canvas.width;
+        const canvasH = this.canvas.height;
+        const hitY = canvasH * 0.82;
+        const laneX = (canvasW / 2) + (lane - 1.5) * (canvasW * 0.18);
+        const color = type === 1 ? '#ff2a8d' : (type === 2 ? '#ffe600' : '#00f0ff');
+
+        this.shockwaves.push({
+          x: laneX,
+          y: hitY,
+          radius: 12,
+          maxRadius: 85,
+          color: color,
+          alpha: 1.0
+        });
+        this.shockwaves.push({
+          x: laneX,
+          y: hitY,
+          radius: 5,
+          maxRadius: 110,
+          color: '#ffffff',
+          alpha: 0.9
+        });
+      }
+
+      gameLoop(timestamp) {
+        if (this.gameState !== 'PLAYING') return;
+
+        const currentTime = this.synth.getCurrentTime();
+
+        if (currentTime > this.songDuration + 1.5) {
+          this.endGame();
+          return;
+        }
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.renderAmbientBokeh();
+        this.renderPerspectiveTrack();
+        this.renderNotes(currentTime);
+
+        this.renderParticles();
+        this.renderShockwaves();
+        this.renderScorePopups();
+
+        requestAnimationFrame((time) => this.gameLoop(time));
+      }
+
+      renderAmbientBokeh() {
+        const h = this.canvas.height;
+        const w = this.canvas.width;
+
+        for (let b of this.ambientBokeh) {
+          b.x += b.vx;
+          b.y += b.vy;
+
+          if (b.y < -30) {
+            b.y = h + 30;
+            b.x = Math.random() * w;
+          }
+
+          this.ctx.save();
+          this.ctx.globalAlpha = b.alpha;
+          this.ctx.beginPath();
+          this.ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+          this.ctx.fillStyle = b.color;
+          this.ctx.shadowColor = b.color;
+          this.ctx.shadowBlur = 25;
+          this.ctx.fill();
+          this.ctx.restore();
+        }
+      }
+
+      renderPerspectiveTrack() {
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        const vanishingY = h * 0.25;
+        const hitY = h * 0.82;
+
+        const topWidth = w * 0.25;
+        const bottomWidth = w * 0.72;
+
+        const topStartX = (w - topWidth) / 2;
+        const bottomStartX = (w - bottomWidth) / 2;
+
+        const grad = this.ctx.createLinearGradient(0, vanishingY, 0, h);
+        grad.addColorStop(0, 'rgba(8, 18, 45, 0.96)');
+        grad.addColorStop(0.5, 'rgba(15, 8, 35, 0.98)');
+        grad.addColorStop(1, 'rgba(3, 8, 24, 0.99)');
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(topStartX, vanishingY);
+        this.ctx.lineTo(topStartX + topWidth, vanishingY);
+        this.ctx.lineTo(bottomStartX + bottomWidth, hitY + 40);
+        this.ctx.lineTo(bottomStartX, hitY + 40);
+        this.ctx.closePath();
+        this.ctx.fillStyle = grad;
+        this.ctx.fill();
+
+        for (let i = 0; i <= 4; i++) {
+          const xTop = topStartX + (topWidth / 4) * i;
+          const xBottom = bottomStartX + (bottomWidth / 4) * i;
+
+          this.ctx.save();
+          this.ctx.beginPath();
+          this.ctx.moveTo(xTop, vanishingY);
+          this.ctx.lineTo(xBottom, hitY + 40);
+          this.ctx.strokeStyle = i === 0 || i === 4 ? '#00f0ff' : 'rgba(0, 240, 255, 0.5)';
+          this.ctx.lineWidth = i === 0 || i === 4 ? 4 : 2;
+          this.ctx.shadowColor = '#00f0ff';
+          this.ctx.shadowBlur = 15;
+          this.ctx.stroke();
+          this.ctx.restore();
+        }
+
+        for (let i = 0; i < 4; i++) {
+          if (this.lanePressEffects[i] > 0) {
+            const xTopL = topStartX + (topWidth / 4) * i;
+            const xTopR = topStartX + (topWidth / 4) * (i + 1);
+            const xBotL = bottomStartX + (bottomWidth / 4) * i;
+            const xBotR = bottomStartX + (bottomWidth / 4) * (i + 1);
+
+            const flashGrad = this.ctx.createLinearGradient(0, vanishingY, 0, hitY);
+            flashGrad.addColorStop(0, `rgba(0, 240, 255, ${this.lanePressEffects[i] * 0.2})`);
+            flashGrad.addColorStop(0.5, `rgba(255, 42, 141, ${this.lanePressEffects[i] * 0.55})`);
+            flashGrad.addColorStop(1, `rgba(255, 255, 255, ${this.lanePressEffects[i] * 0.95})`);
+
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.moveTo(xTopL, vanishingY);
+            this.ctx.lineTo(xTopR, vanishingY);
+            this.ctx.lineTo(xBotR, hitY);
+            this.ctx.lineTo(xBotL, hitY);
+            this.ctx.closePath();
+            this.ctx.fillStyle = flashGrad;
+            this.ctx.shadowColor = '#00f0ff';
+            this.ctx.shadowBlur = 30;
+            this.ctx.fill();
+            this.ctx.restore();
+
+            this.lanePressEffects[i] -= 0.05;
+          }
+        }
+
+        const hitGrad = this.ctx.createLinearGradient(bottomStartX, 0, bottomStartX + bottomWidth, 0);
+        hitGrad.addColorStop(0, '#00f0ff');
+        hitGrad.addColorStop(0.3, '#ff2a8d');
+        hitGrad.addColorStop(0.5, '#ffffff');
+        hitGrad.addColorStop(0.7, '#ffe600');
+        hitGrad.addColorStop(1, '#00f0ff');
+
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.moveTo(bottomStartX - 15, hitY);
+        this.ctx.lineTo(bottomStartX + bottomWidth + 15, hitY);
+        this.ctx.strokeStyle = hitGrad;
+        this.ctx.lineWidth = 8;
+        this.ctx.shadowColor = '#00f0ff';
+        this.ctx.shadowBlur = 25;
+        this.ctx.stroke();
+        this.ctx.restore();
+      }
+
+      renderNotes(currentTime) {
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        const vanishingY = h * 0.25;
+        const hitY = h * 0.82;
+        const topWidth = w * 0.25;
+        const bottomWidth = w * 0.72;
+        const topStartX = (w - topWidth) / 2;
+        const bottomStartX = (w - bottomWidth) / 2;
+
+        const timeWindow = 1.4;
+
+        for (let note of this.notes) {
+          if (note.hit) continue;
+
+          const timeDiff = note.time - currentTime;
+
+          if (timeDiff < -0.30 && !note.missed) {
+            note.missed = true;
+            this.combo = 0;
+            this.life = Math.max(0, this.life - 40);
+            this.stats.miss++;
+            this.showJudgmentPopup('MISS');
+            this.updateHUD();
+          }
+
+          if (timeDiff <= timeWindow && timeDiff >= -0.3) {
+            const progress = 1 - (timeDiff / timeWindow);
+
+            if (progress >= 0 && progress <= 1.1) {
+              const currentY = vanishingY + (hitY - vanishingY) * Math.pow(progress, 1.35);
+              const scale = Math.pow(progress, 1.2);
+
+              const currentLaneW = (topWidth + (bottomWidth - topWidth) * scale) / 4;
+              const currentStartX = (w - (topWidth + (bottomWidth - topWidth) * scale)) / 2;
+              const noteX = currentStartX + currentLaneW * note.lane + currentLaneW * 0.05;
+              const noteWidth = currentLaneW * 0.9;
+              const noteHeight = 18 * scale;
+
+              let color = '#00f0ff';
+              let border = '#ffffff';
+              if (note.type === 1) color = '#ff2a8d';
+              if (note.type === 2) color = '#ffe600';
+
+              this.ctx.save();
+              this.ctx.beginPath();
+              this.ctx.roundRect(noteX, currentY - noteHeight / 2, noteWidth, noteHeight, 8 * scale);
+              this.ctx.fillStyle = color;
+              this.ctx.fill();
+              this.ctx.strokeStyle = border;
+              this.ctx.lineWidth = 2.5 * scale;
+              this.ctx.shadowColor = color;
+              this.ctx.shadowBlur = 18 * scale;
+              this.ctx.stroke();
+              this.ctx.restore();
+
+              if (note.type === 1) {
+                this.ctx.save();
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.shadowColor = '#ff2a8d';
+                this.ctx.shadowBlur = 15;
+                this.ctx.beginPath();
+                this.ctx.moveTo(noteX + noteWidth / 2, currentY - noteHeight * 2.0);
+                this.ctx.lineTo(noteX + noteWidth / 2 - 12 * scale, currentY - noteHeight * 0.7);
+                this.ctx.lineTo(noteX + noteWidth / 2 + 12 * scale, currentY - noteHeight * 0.7);
+                this.ctx.closePath();
+                this.ctx.fill();
+                this.ctx.restore();
+              }
+            }
+          }
+        }
+      }
+
+      renderShockwaves() {
+        for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+          const sw = this.shockwaves[i];
+          sw.radius += 5;
+          sw.alpha -= 0.045;
+
+          if (sw.alpha <= 0 || sw.radius >= sw.maxRadius) {
+            this.shockwaves.splice(i, 1);
+            continue;
+          }
+
+          this.ctx.save();
+          this.ctx.globalAlpha = sw.alpha;
+          this.ctx.beginPath();
+          this.ctx.ellipse(sw.x, sw.y, sw.radius, sw.radius * 0.45, 0, 0, Math.PI * 2);
+          this.ctx.strokeStyle = sw.color;
+          this.ctx.lineWidth = 5;
+          this.ctx.shadowColor = sw.color;
+          this.ctx.shadowBlur = 25;
+          this.ctx.stroke();
+          this.ctx.restore();
+        }
+      }
+
+      renderScorePopups() {
+        for (let i = this.scorePopups.length - 1; i >= 0; i--) {
+          const sp = this.scorePopups[i];
+          sp.y -= 1.5;
+          sp.alpha -= 0.04;
+
+          if (sp.alpha <= 0) {
+            this.scorePopups.splice(i, 1);
+            continue;
+          }
+
+          this.ctx.save();
+          this.ctx.globalAlpha = sp.alpha;
+          this.ctx.font = '900 18px Montserrat, sans-serif';
+          this.ctx.fillStyle = '#ffffff';
+          this.ctx.shadowColor = '#00f0ff';
+          this.ctx.shadowBlur = 10;
+          this.ctx.textAlign = 'center';
+          this.ctx.fillText(sp.text, sp.x, sp.y);
+          this.ctx.restore();
+        }
+      }
+    }
+
+    // --- Application Initialization ---
+    window.addEventListener('load', () => {
+      const game = new ProSekaGame();
+
+      // Setup UI Event Bindings
+      document.querySelectorAll('.diff-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('ring-2', 'ring-pink-400', 'ring-cyan-400'));
+          const target = e.currentTarget;
+          target.classList.add('ring-2', 'ring-cyan-400');
+          game.selectedDifficulty = target.getAttribute('data-diff');
+        });
+      });
+
+      document.getElementById('btn-start-game').addEventListener('click', () => {
+        game.startGame();
+      });
+
+      document.getElementById('btn-pause').addEventListener('click', () => {
+        game.pauseGame();
+      });
+
+      document.getElementById('btn-resume').addEventListener('click', () => {
+        game.resumeGame();
+      });
+
+      document.getElementById('btn-restart').addEventListener('click', () => {
+        game.startGame();
+      });
+
+      document.getElementById('btn-quit').addEventListener('click', () => {
+        game.gameState = 'MENU';
+        game.synth.stopSong();
+        document.getElementById('screen-pause').classList.add('hidden');
+        document.getElementById('game-hud').classList.add('hidden');
+        document.getElementById('screen-main-menu').classList.remove('hidden');
+      });
+
+      document.getElementById('btn-result-retry').addEventListener('click', () => {
+        game.startGame();
+      });
+
+      document.getElementById('btn-result-menu').addEventListener('click', () => {
+        game.gameState = 'MENU';
+        document.getElementById('screen-result').classList.add('hidden');
+        document.getElementById('screen-main-menu').classList.remove('hidden');
+      });
+    });
+  </script>
+</body>
+</html>
