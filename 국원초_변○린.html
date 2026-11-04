@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>먼작귀 마을 마피아 게임!</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Jua&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Gaegu', cursive, sans-serif;
+            background-color: #FFF0F5;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: background-color 0.5s ease;
+        }
+
+        .font-jua {
+            font-family: 'Jua', sans-serif;
+        }
+
+        /* Card Styling & Depth */
+        .cute-card {
+            box-shadow: 0 10px 25px -5px rgba(255, 182, 193, 0.4), 0 8px 10px -6px rgba(255, 182, 193, 0.2);
+            border: 3px solid #FFD1DC;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 240, 245, 0.5);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FFB6C1;
+            border-radius: 10px;
+        }
+
+        /* Night Mode Styling */
+        body.night-theme {
+            background-color: #1e1b4b !important;
+        }
+        .night-theme .cute-card {
+            background-color: rgba(30, 27, 75, 0.95) !important;
+            border-color: #4338ca !important;
+            box-shadow: 0 10px 25px -5px rgba(67, 56, 202, 0.5);
+            color: #e0e7ff !important;
+        }
+        .night-theme h1, .night-theme h2, .night-theme h3 {
+            color: #a5b4fc !important;
+        }
+
+        /* Character Cards */
+        .char-card {
+            transition: all 0.2s ease;
+        }
+        .char-card:hover:not(.eliminated) {
+            transform: translateY(-4px);
+        }
+        .char-card.eliminated {
+            filter: grayscale(100%);
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        .char-card.selected-target {
+            box-shadow: 0 0 0 4px #ec4899;
+            transform: scale(1.04);
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .pulse-target {
+            animation: pulse-ring 1.5s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-3 md:p-6" id="main-body">
+
+    <!-- Top Header -->
+    <header class="text-center mb-4">
+        <h1 class="text-4xl md:text-5xl font-jua text-pink-500 tracking-wider drop-shadow-sm flex items-center justify-center gap-2" id="header-title">
+            ✨ 먼작귀 마을의 비밀! ✨
+        </h1>
+        <p class="text-lg md:text-xl text-pink-400 font-bold mt-1" id="sub-header">
+            마을에 숨어든 키메라(마피아)를 지목하여 평화를 지켜내세요! 🔍
+        </p>
+    </header>
+
+    <!-- Game Main Window -->
+    <main class="w-full max-w-4xl bg-white rounded-3xl p-4 md:p-6 cute-card relative overflow-hidden flex flex-col gap-4">
+
+        <!-- Top Bar: Phase Info & Sound Toggle -->
+        <div class="flex justify-between items-center bg-pink-50 dark:bg-slate-800 p-3 rounded-2xl border border-pink-200 dark:border-indigo-800 transition-colors">
+            <div class="flex items-center gap-3">
+                <span id="phase-badge" class="px-3 py-1 bg-pink-400 text-white font-jua rounded-full text-lg shadow-sm">
+                    🌅 게임 대기 중
+                </span>
+                <span id="day-counter" class="font-jua text-slate-600 dark:text-indigo-200 text-lg">제 1일차</span>
+            </div>
+            <button id="sound-btn" class="flex items-center gap-1.5 text-pink-500 dark:text-indigo-300 font-jua text-base cursor-pointer hover:text-pink-600">
+                <i class="fa-solid fa-volume-high" id="sound-icon"></i> <span id="sound-text">소리 켜짐</span>
+            </button>
+        </div>
+
+        <!-- Role Announcement Banner -->
+        <div id="my-role-banner" class="hidden bg-amber-50 dark:bg-indigo-950 border-2 border-amber-300 dark:border-indigo-700 p-3.5 rounded-2xl text-center font-jua text-slate-700 dark:text-indigo-100 text-lg shadow-sm">
+            나의 캐릭터: <span id="my-char-name" class="text-pink-600 dark:text-pink-400 font-bold text-xl">치이카와</span> | 
+            당신의 역할: <span id="my-role-name" class="text-purple-600 dark:text-purple-300 font-bold text-xl">시민</span>
+            <span id="role-desc" class="block text-sm font-normal text-slate-500 dark:text-indigo-300 mt-1">주민들과 지혜를 모아 키메라를 찾아내세요!</span>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+            
+            <!-- Left: Character Cards Grid (6 players) -->
+            <div class="md:col-span-5 flex flex-col gap-2">
+                <h2 class="font-jua text-lg text-slate-600 dark:text-indigo-300 flex items-center justify-between">
+                    <span>👥 먼작귀 마을 주민들</span>
+                    <span class="text-xs text-pink-400 dark:text-pink-300 font-normal">*클릭해서 능력을 사용할 대상을 선택</span>
+                </h2>
+                <div id="players-grid" class="grid grid-cols-2 gap-2.5">
+                    <!-- Dynamic Character Cards -->
+                </div>
+            </div>
+
+            <!-- Right: Interactive Chat Log & Action Controls -->
+            <div class="md:col-span-7 flex flex-col gap-3 h-[400px] md:h-[440px]">
+                
+                <!-- Chat Log Window -->
+                <div id="chat-window" class="flex-1 bg-slate-50 dark:bg-indigo-950/60 border border-slate-200 dark:border-indigo-800 rounded-2xl p-3 overflow-y-auto flex flex-col gap-2.5 text-base">
+                    <div class="bg-pink-100 dark:bg-indigo-900/80 text-pink-800 dark:text-pink-200 p-3 rounded-2xl font-jua text-sm text-center shadow-sm">
+                        🎉 '먼작귀 마을 마피아 게임'에 오신 것을 환영합니다!<br>하단의 [🚀 게임 시작!] 버튼을 누르면 직업이 무작위 배정됩니다!
+                    </div>
+                </div>
+
+                <!-- Chat Input Form for Player -->
+                <div id="chat-input-container" class="hidden flex gap-2">
+                    <input type="text" id="user-chat-input" placeholder="대화를 입력하세요... (예: 나 진짜 시민이야! 🥺)" 
+                           class="flex-1 px-4 py-2 bg-slate-50 dark:bg-slate-800 border-2 border-pink-300 dark:border-indigo-700 rounded-full font-jua text-sm text-slate-700 dark:text-slate-100 focus:outline-none focus:border-pink-500">
+                    <button id="send-chat-btn" class="px-5 py-2 bg-pink-500 hover:bg-pink-600 text-white font-jua text-base rounded-full shadow cursor-pointer transition-all active:scale-95">
+                        전송 💬
+                    </button>
+                </div>
+
+                <!-- Action Panel -->
+                <div id="action-panel" class="bg-pink-50 dark:bg-indigo-900/50 p-3 rounded-2xl border border-pink-200 dark:border-indigo-700 flex flex-col gap-2 text-center">
+                    <div id="action-desc" class="font-jua text-slate-700 dark:text-indigo-200 text-base">
+                        게임 시작 버튼을 눌러주세요!
+                    </div>
+                    <div class="flex justify-center gap-2" id="action-buttons">
+                        <button id="start-game-btn" class="px-7 py-2.5 bg-pink-500 hover:bg-pink-600 text-white font-jua text-xl rounded-full shadow-md transition-all active:scale-95 cursor-pointer">
+                            🚀 게임 시작!
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Dialog for Game Over Results -->
+    <div id="game-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full cute-card text-center flex flex-col items-center gap-4">
+            <div id="modal-icon" class="text-6xl animate-bounce">🏆</div>
+            <h3 id="modal-title" class="font-jua text-3xl text-pink-600 dark:text-pink-400">게임 결과</h3>
+            <p id="modal-message" class="font-jua text-slate-600 dark:text-indigo-200 text-lg leading-relaxed">
+                시민 팀이 승리했습니다!
+            </p>
+            <button id="modal-close-btn" class="px-7 py-2.5 bg-pink-500 text-white font-jua text-xl rounded-full shadow-md cursor-pointer hover:bg-pink-600 active:scale-95 transition-all">
+                다시 하기
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Sound Engine using Web Audio API
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playClick() {
+                if (this.muted) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(420, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(840, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+
+            playVote() {
+                if (this.muted) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(260, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(130, this.ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.15);
+            }
+
+            playNight() {
+                if (this.muted) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.4);
+                gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.4);
+            }
+
+            playWin() {
+                if (this.muted) return;
+                this.init();
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.08);
+                    gain.gain.setValueAtTime(0.12, this.ctx.currentTime + idx * 0.08);
+                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + idx * 0.08 + 0.15);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + idx * 0.08);
+                    osc.stop(this.ctx.currentTime + idx * 0.08 + 0.15);
+                });
+            }
+        }
+
+        const soundFX = new SoundFX();
+
+        // Character Roster & Speech Line Templates
+        const CHARACTERS = [
+            { id: 'chiikawa', name: '치이카와', emoji: '🥺', color: 'bg-pink-100 border-pink-300 text-pink-800 dark:bg-pink-950 dark:border-pink-800 dark:text-pink-200', quotes: ['후에엥..., 난 무서운 키메라가 아니야!', '와하...! 사이좋게 지내자...', '나, 나 지목하면 울거야...!! 🥺'] },
+            { id: 'hachiware', name: '가르마', emoji: '🐱', color: 'bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-200', quotes: ['어라? 이 분위기는 무슨 일이지?!', '내가 조심스럽게 추리해볼게!', '다 함께 대화해서 키메라를 찾아보자!'] },
+            { id: 'usagi', name: '토끼', emoji: '🐰', color: 'bg-yellow-100 border-yellow-300 text-yellow-800 dark:bg-yellow-950 dark:border-yellow-800 dark:text-yellow-200', quotes: ['우라!! 우라라라!! 🐰', '야하-!! 푸하!! 하앗!', '우라! (의심스러운 눈빛으로 노려본다)'] },
+            { id: 'momonga', name: '모몽가', emoji: '🐿️', color: 'bg-purple-100 border-purple-300 text-purple-800 dark:bg-purple-950 dark:border-purple-800 dark:text-purple-200', quotes: ['귀여워해라! 나를 의심하는 거냐?!', '칭찬해줘!! 내가 시민이라고!', '흠! 기분 나빠! 나 의심하지 마!'] },
+            { id: 'rakka', name: '락커 선생님', emoji: '🦦', color: 'bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-200', quotes: ['차분하게 생각해봐야겠군.', '특훈의 성과로 키메라를 가려내겠어.', '주민들 사이 어둠이 도사리고 있다.'] },
+            { id: 'kurimanju', name: '밤토리', emoji: '🌰', color: 'bg-orange-100 border-orange-300 text-orange-800 dark:bg-orange-950 dark:border-orange-800 dark:text-orange-200', quotes: ['크하~ (달콤한 주스를 마신다)', '음..., 천천히 조사해봐.', '...쯧! 누가 조용히 행동하는지 봐!'] }
+        ];
+
+        // Roles Definition
+        const ROLES = {
+            MAFIA: { id: 'MAFIA', name: '키메라 (마피아)', desc: '밤마다 다른 먼작귀 주민 한 명을 해칩니다.', team: 'MAFIA' },
+            POLICE: { id: 'POLICE', name: '토벌꾼 (경찰)', desc: '밤마다 한 명을 조사하여 키메라 여부를 확인합니다.', team: 'CITIZEN' },
+            DOCTOR: { id: 'DOCTOR', name: '약사 (의사)', desc: '밤마다 한 명을 치료하여 키메라의 공격으로부터 지킵니다.', team: 'CITIZEN' },
+            CITIZEN: { id: 'CITIZEN', name: '시민', desc: '낮 동안 투표를 통해 키메라를 찾아내야 합니다.', team: 'CITIZEN' }
+        };
+
+        // Game State Structure
+        let gameState = {
+            phase: 'INIT', // INIT, DAY_TALK, DAY_VOTE, NIGHT
+            day: 1,
+            players: [],
+            userPlayer: null,
+            selectedTarget: null,
+            nightTargetMafia: null,
+            nightTargetPolice: null,
+            nightTargetDoctor: null
+        };
+
+        // DOM References
+        const mainBody = document.getElementById('main-body');
+        const phaseBadge = document.getElementById('phase-badge');
+        const dayCounter = document.getElementById('day-counter');
+        const playersGrid = document.getElementById('players-grid');
+        const chatWindow = document.getElementById('chat-window');
+        const actionDesc = document.getElementById('action-desc');
+        const actionButtons = document.getElementById('action-buttons');
+        const startBtn = document.getElementById('start-game-btn');
+        const roleBanner = document.getElementById('my-role-banner');
+        const chatInputContainer = document.getElementById('chat-input-container');
+        const userChatInput = document.getElementById('user-chat-input');
+        const sendChatBtn = document.getElementById('send-chat-btn');
+
+        // User Chat Send Listener
+        function sendUserChat() {
+            const text = userChatInput.value.trim();
+            if (!text || !gameState.userPlayer || !gameState.userPlayer.isAlive) return;
+            if (gameState.phase !== 'DAY_TALK' && gameState.phase !== 'DAY_VOTE') return;
+
+            soundFX.playClick();
+            addChatMessage(gameState.userPlayer.name, text);
+            userChatInput.value = '';
+
+            // AI dynamic reaction to user chat
+            setTimeout(() => {
+                const aliveAI = gameState.players.filter(p => p.isAlive && !p.isUser);
+                if (aliveAI.length > 0 && Math.random() < 0.7) {
+                    const responder = aliveAI[Math.floor(Math.random() * aliveAI.length)];
+                    const reactions = [
+                        '정말일까...? 의심스러운 행동이야!',
+                        '음, 일리 있는 말 같기도 하고...',
+                        '수상해! 나한테 덮어씌우려는 건 아니지?!',
+                        '후에엥... 그래도 치이카와 말도 들어보자!',
+                        '그 말이 맞다면 그럼 진짜 키메라는 누구야?'
+                    ];
+                    addChatMessage(responder.name, reactions[Math.floor(Math.random() * reactions.length)]);
+                }
+            }, 1000);
+        }
+
+        sendChatBtn.addEventListener('click', sendUserChat);
+        userChatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendUserChat();
+        });
+
+        // Sound Toggle Button Listener
+        document.getElementById('sound-btn').addEventListener('click', () => {
+            soundFX.muted = !soundFX.muted;
+            document.getElementById('sound-icon').className = soundFX.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+            document.getElementById('sound-text').textContent = soundFX.muted ? '소리 끔' : '소리 켜짐';
+        });
+
+        // Initialize Game Setup
+        function initGame() {
+            const shuffledChars = [...CHARACTERS].sort(() => Math.random() - 0.5);
+            
+            // Fixed Roles Distribution (1 Mafia, 1 Police, 1 Doctor, 3 Citizens)
+            const roleList = [ROLES.MAFIA, ROLES.POLICE, ROLES.DOCTOR, ROLES.CITIZEN, ROLES.CITIZEN, ROLES.CITIZEN].sort(() => Math.random() - 0.5);
+
+            gameState.players = shuffledChars.map((char, idx) => ({
+                ...char,
+                role: roleList[idx],
+                isAlive: true,
+                isUser: idx === 0 // Player assigned to 1st random card
+            }));
+
+            gameState.userPlayer = gameState.players.find(p => p.isUser);
+            gameState.day = 1;
+            gameState.phase = 'DAY_TALK';
+            gameState.selectedTarget = null;
+
+            // Render Banner
+            roleBanner.classList.remove('hidden');
+            document.getElementById('my-char-name').textContent = `${gameState.userPlayer.emoji} ${gameState.userPlayer.name}`;
+            document.getElementById('my-role-name').textContent = gameState.userPlayer.role.name;
+            document.getElementById('role-desc').textContent = gameState.userPlayer.role.desc;
+
+            // Clear Chat
+            chatWindow.innerHTML = '';
+            addChatMessage('SYSTEM', `🎮 당신은 [ ${gameState.userPlayer.emoji} ${gameState.userPlayer.name} ] 이며, 부여받은 직업은 [ ${gameState.userPlayer.role.name} ] 입니다!`);
+
+            renderPlayers();
+            startDayPhase();
+        }
+
+        // Render Character Grid Cards
+        function renderPlayers() {
+            playersGrid.innerHTML = '';
+            gameState.players.forEach(p => {
+                const card = document.createElement('div');
+                const isSelected = gameState.selectedTarget === p.id;
+                
+                card.className = `char-card border-2 p-3 rounded-2xl flex flex-col items-center justify-between cursor-pointer ${p.color} ${!p.isAlive ? 'eliminated' : ''} ${isSelected ? 'selected-target pulse-target' : ''}`;
+
+                card.innerHTML = `
+                    <div class="text-3xl mb-1">${p.emoji}</div>
+                    <div class="font-jua text-base text-center leading-tight">
+                        ${p.name}
+                        ${p.isUser ? '<span class="text-xs block text-pink-600 dark:text-pink-400 font-bold">(나)</span>' : ''}
+                    </div>
+                    <div class="mt-1">
+                        ${p.isAlive 
+                            ? `<span class="text-xs bg-white/80 dark:bg-slate-800/80 px-2.5 py-0.5 rounded-full font-jua">생존</span>` 
+                            : `<span class="text-xs bg-slate-600 text-white px-2.5 py-0.5 rounded-full font-jua">탈락</span>`}
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    if (!p.isAlive) return;
+                    soundFX.playClick();
+                    gameState.selectedTarget = isSelected ? null : p.id;
+                    renderPlayers();
+                    updateActionControls();
+                });
+
+                playersGrid.appendChild(card);
+            });
+        }
+
+        // Append Message to Chat Log Window
+        function addChatMessage(sender, text) {
+            const msgDiv = document.createElement('div');
+            if (sender === 'SYSTEM') {
+                msgDiv.className = 'bg-pink-100 dark:bg-indigo-900 border border-pink-200 dark:border-indigo-700 text-pink-800 dark:text-pink-200 p-2.5 rounded-xl font-jua text-sm text-center shadow-sm';
+                msgDiv.innerHTML = text;
+            } else {
+                const p = gameState.players.find(player => player.name === sender || player.id === sender);
+                const isUser = p && p.isUser;
+                msgDiv.className = `flex gap-2 items-start ${isUser ? 'flex-row-reverse' : ''}`;
+                msgDiv.innerHTML = `
+                    <div class="text-2xl">${p ? p.emoji : '💬'}</div>
+                    <div class="${isUser ? 'bg-pink-500 text-white' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-indigo-800 text-slate-800 dark:text-indigo-100'} p-2.5 rounded-2xl max-w-[82%] font-jua text-sm shadow-sm">
+                        <div class="text-xs ${isUser ? 'text-pink-100' : 'text-slate-400 dark:text-indigo-300'} mb-0.5">${p ? p.name : sender}</div>
+                        <div>${text}</div>
+                    </div>
+                `;
+            }
+            chatWindow.appendChild(msgDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        // Start Day Talk Phase
+        function startDayPhase() {
+            gameState.phase = 'DAY_TALK';
+            mainBody.classList.remove('night-theme');
+            phaseBadge.className = 'px-3 py-1 bg-amber-400 text-white font-jua rounded-full text-lg shadow-sm';
+            phaseBadge.textContent = '☀️ 낮 - 대화 시간';
+            dayCounter.textContent = `제 ${gameState.day}일차`;
+
+            if (gameState.userPlayer.isAlive) {
+                chatInputContainer.classList.remove('hidden');
+            }
+
+            addChatMessage('SYSTEM', `☀️ 제 ${gameState.day}일차 낮이 찾아왔습니다. 채팅창에 직접 대화를 입력해보세요!`);
+
+            simulateAIDialogue();
+
+            actionDesc.textContent = '직접 대화를 나누며 의심스러운 대상을 추리하세요!';
+            actionButtons.innerHTML = `
+                <button id="to-vote-btn" class="px-7 py-2 bg-pink-500 hover:bg-pink-600 text-white font-jua text-lg rounded-full shadow transition-all cursor-pointer">
+                    🗳️ 지목 투표로 이동
+                </button>
+            `;
+            document.getElementById('to-vote-btn').addEventListener('click', () => {
+                soundFX.playClick();
+                startVotePhase();
+            });
+        }
+
+        // Simulate AI Dialogue
+        function simulateAIDialogue() {
+            const aliveAI = gameState.players.filter(p => p.isAlive && !p.isUser);
+            if (aliveAI.length === 0) return;
+
+            let delay = 700;
+            aliveAI.forEach(p => {
+                setTimeout(() => {
+                    if (gameState.phase !== 'DAY_TALK') return;
+                    const randomQuote = p.quotes[Math.floor(Math.random() * p.quotes.length)];
+                    addChatMessage(p.name, randomQuote);
+                }, delay);
+                delay += 1100;
+            });
+        }
+
+        // Start Vote Phase
+        function startVotePhase() {
+            gameState.phase = 'DAY_VOTE';
+            gameState.selectedTarget = null;
+            phaseBadge.className = 'px-3 py-1 bg-pink-500 text-white font-jua rounded-full text-lg shadow-sm';
+            phaseBadge.textContent = '🗳️ 낮 - 지목 투표';
+
+            addChatMessage('SYSTEM', '🗳️ 의심스러운 키메라(마피아) 1명을 좌측에서 선택하여 투표 버튼을 눌러주세요!');
+
+            renderPlayers();
+            updateActionControls();
+        }
+
+        // Update Action Controls Logic
+        function updateActionControls() {
+            if (gameState.phase === 'DAY_VOTE') {
+                const target = gameState.players.find(p => p.id === gameState.selectedTarget);
+                actionDesc.textContent = target 
+                    ? `[ ${target.emoji} ${target.name} ] 님을 지목하시겠습니까?` 
+                    : `좌측 마을 주민 카드에서 지목할 대상을 선택하세요.`;
+                
+                actionButtons.innerHTML = `
+                    <button id="submit-vote-btn" ${!gameState.selectedTarget ? 'disabled' : ''} 
+                        class="px-7 py-2 bg-pink-500 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white font-jua text-lg rounded-full shadow transition-all cursor-pointer">
+                        🗳️ 투표 제출!
+                    </button>
+                `;
+
+                if (gameState.selectedTarget) {
+                    document.getElementById('submit-vote-btn').addEventListener('click', processVotes);
+                }
+            } else if (gameState.phase === 'NIGHT') {
+                const role = gameState.userPlayer.role;
+                if (!gameState.userPlayer.isAlive) {
+                    actionDesc.textContent = '당신은 이미 탈락하여 조용히 성불 관전 중입니다... 👻';
+                    actionButtons.innerHTML = `
+                        <button id="skip-night-btn" class="px-7 py-2 bg-indigo-600 text-white font-jua text-lg rounded-full shadow transition-all cursor-pointer">
+                            🌙 밤 결과 확인하기
+                        </button>
+                    `;
+                    document.getElementById('skip-night-btn').addEventListener('click', processNightActions);
+                    return;
+                }
+
+                const target = gameState.players.find(p => p.id === gameState.selectedTarget);
+
+                let promptText = '';
+                if (role.id === 'MAFIA') promptText = target ? `[ ${target.emoji} ${target.name} ] 님을 습격하시겠습니까?` : '밤에 습격할 대상을 지목하세요! 😈';
+                else if (role.id === 'POLICE') promptText = target ? `[ ${target.emoji} ${target.name} ] 님을 조사하시겠습니까?` : '수사하여 정체를 밝힐 대상을 선택하세요! 🔍';
+                else if (role.id === 'DOCTOR') promptText = target ? `[ ${target.emoji} ${target.name} ] 님을 보호하시겠습니까?` : '약으로 습격으로부터 치료할 대상을 선택하세요! 💊';
+                else promptText = '밤이 되었습니다. 이불을 덮고 아침을 조용히 기다리세요... 💤';
+
+                actionDesc.textContent = promptText;
+
+                if (role.id === 'CITIZEN') {
+                    actionButtons.innerHTML = `
+                        <button id="pass-night-btn" class="px-7 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-jua text-lg rounded-full shadow transition-all cursor-pointer">
+                            💤 잠자리에 들기
+                        </button>
+                    `;
+                    document.getElementById('pass-night-btn').addEventListener('click', processNightActions);
+                } else {
+                    actionButtons.innerHTML = `
+                        <button id="act-night-btn" ${!gameState.selectedTarget ? 'disabled' : ''} 
+                            class="px-7 py-2 bg-indigo-600 disabled:bg-slate-400 dark:disabled:bg-slate-700 hover:bg-indigo-700 text-white font-jua text-lg rounded-full shadow transition-all cursor-pointer">
+                            🌙 능력 사용하기
+                        </button>
+                    `;
+                    if (gameState.selectedTarget) {
+                        document.getElementById('act-night-btn').addEventListener('click', processNightActions);
+                    }
+                }
+            }
+        }
+
+        // Process Day Voting Results
+        function processVotes() {
+            soundFX.playVote();
+            const alivePlayers = gameState.players.filter(p => p.isAlive);
+            const votes = {};
+
+            alivePlayers.forEach(p => votes[p.id] = 0);
+
+            // Player Vote
+            if (gameState.userPlayer.isAlive && gameState.selectedTarget) {
+                votes[gameState.selectedTarget]++;
+            }
+
+            // AI Votes
+            alivePlayers.forEach(p => {
+                if (!p.isUser) {
+                    const targets = alivePlayers.filter(target => target.id !== p.id);
+                    const randomTarget = targets[Math.floor(Math.random() * targets.length)];
+                    votes[randomTarget.id]++;
+                }
+            });
+
+            // Find Maximum Vote Receiver
+            let maxVotes = -1;
+            let eliminatedId = null;
+            let isTie = false;
+
+            Object.keys(votes).forEach(id => {
+                if (votes[id] > maxVotes) {
+                    maxVotes = votes[id];
+                    eliminatedId = id;
+                    isTie = false;
+                } else if (votes[id] === maxVotes) {
+                    isTie = true;
+                }
+            });
+
+            if (isTie || !eliminatedId) {
+                addChatMessage('SYSTEM', '⚖️ 주민들의 의견이 갈려 동점이 되었으므로 아무도 탈락하지 않았습니다.');
+            } else {
+                const eliminated = gameState.players.find(p => p.id === eliminatedId);
+                eliminated.isAlive = false;
+                addChatMessage('SYSTEM', `🚨 지목 투표 결과, [ ${eliminated.emoji} ${eliminated.name} ] 님이 주민들에 의해 의심받아 마을에서 탈락했습니다!`);
+            }
+
+            renderPlayers();
+
+            if (checkGameOver()) return;
+
+            setTimeout(startNightPhase, 2000);
+        }
+
+        // Start Night Phase
+        function startNightPhase() {
+            gameState.phase = 'NIGHT';
+            gameState.selectedTarget = null;
+            soundFX.playNight();
+
+            chatInputContainer.classList.add('hidden');
+            mainBody.classList.add('night-theme');
+            phaseBadge.className = 'px-3 py-1 bg-indigo-900 text-indigo-100 font-jua rounded-full text-lg shadow-sm';
+            phaseBadge.textContent = '🌙 밤 - 직업 행동';
+
+            addChatMessage('SYSTEM', '🌙 밤이 깊었습니다. 고요함 속에서 각 직업의 능력을 수행하세요.');
+
+            renderPlayers();
+            updateActionControls();
+        }
+
+        // Process Night Actions Logic
+        function processNightActions() {
+            soundFX.playClick();
+            const userRole = gameState.userPlayer.role;
+
+            gameState.nightTargetMafia = null;
+            gameState.nightTargetPolice = null;
+            gameState.nightTargetDoctor = null;
+
+            // Player Action
+            if (gameState.userPlayer.isAlive && gameState.selectedTarget) {
+                if (userRole.id === 'MAFIA') gameState.nightTargetMafia = gameState.selectedTarget;
+                if (userRole.id === 'POLICE') gameState.nightTargetPolice = gameState.selectedTarget;
+                if (userRole.id === 'DOCTOR') gameState.nightTargetDoctor = gameState.selectedTarget;
+            }
+
+            const alivePlayers = gameState.players.filter(p => p.isAlive);
+
+            // AI Mafia Attack Choice
+            const mafiaAI = alivePlayers.find(p => !p.isUser && p.role.id === 'MAFIA');
+            if (mafiaAI) {
+                const nonMafias = alivePlayers.filter(p => p.role.id !== 'MAFIA');
+                if (nonMafias.length > 0) {
+                    gameState.nightTargetMafia = nonMafias[Math.floor(Math.random() * nonMafias.length)].id;
+                }
+            }
+
+            // AI Doctor Heal Choice
+            const doctorAI = alivePlayers.find(p => !p.isUser && p.role.id === 'DOCTOR');
+            if (doctorAI) {
+                gameState.nightTargetDoctor = alivePlayers[Math.floor(Math.random() * alivePlayers.length)].id;
+            }
+
+            // Police Feedback to Player
+            if (gameState.userPlayer.isAlive && userRole.id === 'POLICE' && gameState.nightTargetPolice) {
+                const target = gameState.players.find(p => p.id === gameState.nightTargetPolice);
+                const isMafia = target.role.id === 'MAFIA';
+                addChatMessage('SYSTEM', `🔍 [토벌 수사 보고] ${target.emoji} ${target.name} 님은 ${isMafia ? '<b class="text-purple-600 dark:text-purple-400">위험한 키메라(마피아)가 맞습니다!</b>' : '<b class="text-blue-600 dark:text-blue-400">평화로운 먼작귀 주민입니다.</b>'}`);
+            }
+
+            // Attack vs Save Check
+            let killedPlayer = null;
+            if (gameState.nightTargetMafia) {
+                if (gameState.nightTargetMafia !== gameState.nightTargetDoctor) {
+                    killedPlayer = gameState.players.find(p => p.id === gameState.nightTargetMafia);
+                    killedPlayer.isAlive = false;
+                }
+            }
+
+            // Next Day Morning Summary
+            gameState.day++;
+            if (killedPlayer) {
+                addChatMessage('SYSTEM', `💥 지난밤, [ ${killedPlayer.emoji} ${killedPlayer.name} ] 님이 어둠 속 키메라의 기습을 받고 탈락했습니다!`);
+            } else {
+                addChatMessage('SYSTEM', `🛡️ 약사의 신속한 치료와 보호 덕분에 지난밤 아무도 피해를 입지 않았습니다!`);
+            }
+
+            renderPlayers();
+
+            if (checkGameOver()) return;
+
+            setTimeout(startDayPhase, 2000);
+        }
+
+        // Check Victory / Defeat Conditions
+        function checkGameOver() {
+            const aliveMafia = gameState.players.filter(p => p.isAlive && p.role.id === 'MAFIA');
+            const aliveCitizens = gameState.players.filter(p => p.isAlive && p.role.id !== 'MAFIA');
+
+            if (aliveMafia.length === 0) {
+                soundFX.playWin();
+                showModal('🏆 시민 팀 승리!', '🎉 축하합니다! 먼작귀 주민들이 무사히 키메라를 격퇴하고 마을의 평화를 지켰습니다!');
+                return true;
+            } else if (aliveMafia.length >= aliveCitizens.length) {
+                showModal('💀 키메라 승리...', '😱 안돼!! 키메라가 세력을 키워 먼작귀 마을을 점령하고 말았습니다...');
+                return true;
+            }
+
+            return false;
+        }
+
+        // Modal Display Helper
+        function showModal(title, msg) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = msg;
+            document.getElementById('game-modal').classList.remove('hidden');
+        }
+
+        // Reset Game Button
+        document.getElementById('modal-close-btn').addEventListener('click', () => {
+            document.getElementById('game-modal').classList.add('hidden');
+            mainBody.classList.remove('night-theme');
+            initGame();
+        });
+
+        // Event Listener: Start Game
+        startBtn.addEventListener('click', () => {
+            soundFX.playClick();
+            initGame();
+        });
+    </script>
+</body>
+</html>
