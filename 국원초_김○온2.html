@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Project Sekai Rhythm Game - 프로젝트 세카이</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'M PLUS Rounded 1c', sans-serif;
+            background-color: #0b0e14;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        /* Project Sekai Gradient Theme */
+        .sekai-bg {
+            background: linear-gradient(135deg, #0d121d 0%, #171d2c 50%, #0c1827 100%);
+        }
+
+        .sekai-glass {
+            background: rgba(18, 25, 40, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .sekai-btn {
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sekai-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* Glowing text & borders */
+        .glow-cyan {
+            text-shadow: 0 0 10px rgba(51, 204, 255, 0.8), 0 0 20px rgba(51, 204, 255, 0.4);
+        }
+        .glow-pink {
+            text-shadow: 0 0 10px rgba(255, 51, 153, 0.8), 0 0 20px rgba(255, 51, 153, 0.4);
+        }
+
+        /* Unit Colors */
+        .unit-miku { color: #33ccff; border-color: #33ccff; }
+        .unit-ln { color: #4488ff; border-color: #4488ff; }      /* Leo/need */
+        .unit-mmj { color: #88dd44; border-color: #88dd44; }     /* MORE MORE JUMP! */
+        .unit-vbs { color: #ff6600; border-color: #ff6600; }     /* Vivid BAD SQUAD */
+        .unit-wxs { color: #ffbb00; border-color: #ffbb00; }     /* Wonderlands x Showtime */
+        .unit-25ji { color: #884499; border-color: #884499; }    /* 25-ji, Nightcord de. */
+
+        /* Canvas Style */
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(51, 204, 255, 0.5);
+            border-radius: 3px;
+        }
+
+        /* Keycaps visual */
+        .keycap {
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        /* Judgment Popups */
+        @keyframes popupJudg {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(1.0); opacity: 1; }
+        }
+        .animate-popup {
+            animation: popupJudg 0.15s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="sekai-bg h-screen w-screen relative flex flex-col justify-between select-none">
+
+    <!-- Top Navigation Bar -->
+    <header class="w-full h-14 sekai-glass px-6 flex items-center justify-between z-30 border-b border-cyan-500/20">
+        <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-400 to-pink-500 flex items-center justify-center font-black text-xs shadow-lg">
+                pjsekai
+            </div>
+            <h1 class="font-black text-lg tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-white to-pink-400">
+                PROJECT SEKAI <span class="text-xs text-cyan-400 font-normal ml-1">FEAT. HATSUNE MIKU</span>
+            </h1>
+        </div>
+
+        <div class="flex items-center space-x-6 text-sm font-semibold">
+            <div class="flex items-center space-x-2 bg-black/40 px-3 py-1 rounded-full border border-cyan-500/30">
+                <i class="fa-solid fa-bolt text-yellow-400"></i>
+                <span>LIVE ENERGY</span>
+                <span class="text-cyan-300 font-bold">10 / 10</span>
+            </div>
+            <div class="flex items-center space-x-2 bg-black/40 px-3 py-1 rounded-full border border-pink-500/30">
+                <i class="fa-solid fa-gem text-pink-400"></i>
+                <span class="text-pink-300 font-bold">3,900</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="relative flex-1 w-full h-[calc(100vh-3.5rem)] overflow-hidden">
+
+        <!-- ==================== SCREEN 1: SONG SELECT ==================== -->
+        <section id="selectScreen" class="absolute inset-0 flex flex-col md:flex-row p-4 md:p-8 gap-6 z-20">
+            
+            <!-- Left Panel: Song Details & Difficulty Selection -->
+            <div class="w-full md:w-5/12 flex flex-col justify-between sekai-glass rounded-2xl p-6 border border-cyan-500/30 shadow-2xl relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div>
+                    <!-- Unit Badge -->
+                    <div id="songUnitBadge" class="inline-flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-bold mb-3 unit-miku bg-black/40">
+                        <i class="fa-solid fa-music"></i>
+                        <span id="songUnitText">Vocaloid Songs</span>
+                    </div>
+
+                    <!-- Song Title & Composer -->
+                    <h2 id="songTitle" class="text-2xl md:text-3xl font-black tracking-tight text-white mb-1">Tell Your World</h2>
+                    <p id="songComposer" class="text-cyan-300 text-sm font-medium mb-4">kz (livetune) feat. 初音ミク</p>
+
+                    <!-- Album Cover Display -->
+                    <div class="relative w-full aspect-video rounded-xl overflow-hidden mb-4 border border-white/20 shadow-lg group">
+                        <img id="songJacket" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&auto=format&fit=crop&q=80" class="w-full h-full object-cover transition duration-500 group-hover:scale-105" alt="Jacket">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
+                            <div class="flex justify-between w-full text-xs text-gray-300">
+                                <span>BPM: <strong id="songBpm" class="text-white">150</strong></span>
+                                <span>High Score: <strong id="songHighScore" class="text-yellow-400 font-bold">0000000</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Difficulty Selector -->
+                    <div class="mb-4">
+                        <label class="text-xs text-gray-400 font-bold mb-2 block uppercase tracking-widest">Select Difficulty</label>
+                        <div class="grid grid-cols-5 gap-2">
+                            <button onclick="setDifficulty('EASY')" id="diff-EASY" class="diff-btn py-2 rounded-lg font-black text-xs flex flex-col items-center justify-center border transition bg-emerald-950/40 border-emerald-500 text-emerald-300 hover:bg-emerald-800/50">
+                                EASY
+                                <span class="text-[10px] opacity-80" id="lvl-EASY">Lv.6</span>
+                            </button>
+                            <button onclick="setDifficulty('NORMAL')" id="diff-NORMAL" class="diff-btn py-2 rounded-lg font-black text-xs flex flex-col items-center justify-center border transition bg-blue-950/40 border-blue-500 text-blue-300 hover:bg-blue-800/50">
+                                NORMAL
+                                <span class="text-[10px] opacity-80" id="lvl-NORMAL">Lv.12</span>
+                            </button>
+                            <button onclick="setDifficulty('HARD')" id="diff-HARD" class="diff-btn py-2 rounded-lg font-black text-xs flex flex-col items-center justify-center border transition bg-yellow-950/40 border-yellow-500 text-yellow-300 hover:bg-yellow-800/50">
+                                HARD
+                                <span class="text-[10px] opacity-80" id="lvl-HARD">Lv.18</span>
+                            </button>
+                            <button onclick="setDifficulty('EXPERT')" id="diff-EXPERT" class="diff-btn py-2 rounded-lg font-black text-xs flex flex-col items-center justify-center border transition bg-red-950/40 border-red-500 text-red-300 hover:bg-red-800/50 ring-2 ring-red-400">
+                                EXPERT
+                                <span class="text-[10px] opacity-80" id="lvl-EXPERT">Lv.25</span>
+                            </button>
+                            <button onclick="setDifficulty('MASTER')" id="diff-MASTER" class="diff-btn py-2 rounded-lg font-black text-xs flex flex-col items-center justify-center border transition bg-purple-950/40 border-purple-500 text-purple-300 hover:bg-purple-800/50">
+                                MASTER
+                                <span class="text-[10px] opacity-80" id="lvl-MASTER">Lv.30</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Start Button -->
+                <button onclick="openStartConfirmation()" class="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-pink-500 font-black text-xl text-black tracking-wider shadow-lg shadow-cyan-500/30 hover:brightness-110 active:scale-98 transition flex items-center justify-center space-x-3">
+                    <i class="fa-solid fa-play text-2xl"></i>
+                    <span>게임 시작 (LIVE START)</span>
+                </button>
+            </div>
+
+            <!-- Right Panel: Song Playlist -->
+            <div class="w-full md:w-7/12 flex flex-col sekai-glass rounded-2xl p-4 md:p-6 border border-cyan-500/20">
+                <div class="flex justify-between items-center mb-4 pb-2 border-b border-white/10">
+                    <span class="font-bold text-sm text-cyan-300 tracking-wider">MUSIC SELECT</span>
+                    <span class="text-xs text-gray-400"><i class="fa-solid fa-sliders mr-1"></i> Sorted by Default</span>
+                </div>
+
+                <!-- Song List Items Scrollable -->
+                <div id="songListContainer" class="flex-1 overflow-y-auto space-y-3 pr-2">
+                    <!-- Populated dynamically by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SCREEN 1.5: GAME START CONFIRMATION MODAL ==================== -->
+        <div id="startModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-40 hidden flex items-center justify-center p-4">
+            <div class="bg-slate-900/90 rounded-3xl p-6 md:p-8 border border-cyan-400/50 shadow-2xl max-w-md w-full flex flex-col items-center relative overflow-hidden">
+                <div class="absolute -top-12 -right-12 w-32 h-32 bg-cyan-500/20 rounded-full blur-2xl"></div>
+                <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-pink-500/20 rounded-full blur-2xl"></div>
+
+                <button onclick="closeStartConfirmation()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+                <div class="text-xs font-bold text-cyan-400 tracking-widest mb-1">READY TO PLAY</div>
+                <h3 id="modalSongTitle" class="text-2xl font-black text-white text-center mb-1">Tell Your World</h3>
+                <div id="modalSongDiff" class="px-3 py-1 rounded-full text-xs font-bold mb-6 bg-red-600 text-white">EXPERT Lv.25</div>
+
+                <div class="relative w-48 h-48 rounded-2xl overflow-hidden shadow-2xl border-2 border-white/20 mb-6">
+                    <img id="modalJacket" src="" class="w-full h-full object-cover" alt="Jacket">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end justify-center pb-2">
+                        <span class="text-xs text-cyan-300 font-semibold"><i class="fa-solid fa-volume-high mr-1"></i> Sound Ready</span>
+                    </div>
+                </div>
+
+                <div class="flex space-x-3 w-full">
+                    <button onclick="closeStartConfirmation()" class="flex-1 py-3.5 rounded-xl bg-gray-800 border border-gray-600 font-bold text-gray-300 hover:bg-gray-700 transition">
+                        취소
+                    </button>
+                    <button onclick="confirmStartLive()" class="flex-2 w-2/3 py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-pink-500 font-black text-lg text-black shadow-lg shadow-cyan-500/40 hover:brightness-110 active:scale-98 transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-play"></i>
+                        <span>지금 시작!</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SCREEN 2: GAMEPLAY CANVAS ==================== -->
+        <section id="gameScreen" class="absolute inset-0 hidden z-10 bg-black">
+            <!-- Canvas for 3D perspective rhythm track -->
+            <canvas id="gameCanvas"></canvas>
+
+            <!-- HUD Overlay -->
+            <div class="absolute inset-0 pointer-events-none p-6 flex flex-col justify-between">
+                <!-- Top HUD Bar -->
+                <div class="flex justify-between items-start">
+                    <!-- Life / Health Bar -->
+                    <div class="w-1/3 max-w-xs">
+                        <div class="flex justify-between text-xs font-bold mb-1">
+                            <span class="text-green-400"><i class="fa-solid fa-heart mr-1"></i>LIFE</span>
+                            <span id="lifeText" class="text-white">1000 / 1000</span>
+                        </div>
+                        <div class="w-full h-3 bg-gray-900 rounded-full overflow-hidden border border-gray-700">
+                            <div id="lifeBar" class="h-full bg-gradient-to-r from-emerald-400 to-green-500 w-full transition-all duration-200"></div>
+                        </div>
+                    </div>
+
+                    <!-- Song Info -->
+                    <div class="text-center">
+                        <div id="hudSongTitle" class="font-black text-sm md:text-lg text-white drop-shadow">Tell Your World</div>
+                        <div id="hudDiffBadge" class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white">EXPERT Lv.25</div>
+                    </div>
+
+                    <!-- Score Counter -->
+                    <div class="text-right">
+                        <div class="text-[10px] text-cyan-300 font-bold tracking-widest">SCORE</div>
+                        <div id="scoreText" class="font-black text-2xl md:text-3xl text-white tracking-wider glow-cyan">00000000</div>
+                    </div>
+                </div>
+
+                <!-- Center Judgment & Combo Display -->
+                <div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                    <div id="comboContainer" class="hidden">
+                        <div id="comboNum" class="font-black text-5xl md:text-6xl text-cyan-300 italic tracking-tighter drop-shadow-lg">0</div>
+                        <div class="text-xs font-bold tracking-widest text-white/80">COMBO</div>
+                    </div>
+                    <div id="judgmentText" class="font-black text-3xl md:text-4xl mt-2 tracking-widest opacity-0 transition-opacity">PERFECT</div>
+                </div>
+
+                <!-- Bottom Controls / Keys Indicator (Desktop + Mobile Touch zones) -->
+                <div class="w-full flex justify-center space-x-2 md:space-x-4 mb-2 pointer-events-auto">
+                    <div class="keycap-btn flex-1 py-3 bg-cyan-950/60 border-t-2 border-cyan-400/80 rounded-b-lg text-center font-black text-cyan-300 text-xs md:text-sm active:bg-cyan-500/40" ontouchstart="handleTouch(0)" onclick="handleTouch(0)">S</div>
+                    <div class="keycap-btn flex-1 py-3 bg-cyan-950/60 border-t-2 border-cyan-400/80 rounded-b-lg text-center font-black text-cyan-300 text-xs md:text-sm active:bg-cyan-500/40" ontouchstart="handleTouch(1)" onclick="handleTouch(1)">D</div>
+                    <div class="keycap-btn flex-1 py-3 bg-cyan-950/60 border-t-2 border-cyan-400/80 rounded-b-lg text-center font-black text-cyan-300 text-xs md:text-sm active:bg-cyan-500/40" ontouchstart="handleTouch(2)" onclick="handleTouch(2)">F</div>
+                    <div class="keycap-btn flex-1 py-3 bg-cyan-950/60 border-t-2 border-cyan-400/80 rounded-b-lg text-center font-black text-cyan-300 text-xs md:text-sm active:bg-cyan-500/40" ontouchstart="handleTouch(3)" onclick="handleTouch(3)">J</div>
+                    <div class="keycap-btn flex-1 py-3 bg-cyan-950/60 border-t-2 border-cyan-400/80 rounded-b-lg text-center font-black text-cyan-300 text-xs md:text-sm active:bg-cyan-500/40" ontouchstart="handleTouch(4)" onclick="handleTouch(4)">K</div>
+                    <div class="keycap-btn flex-1 py-3 bg-cyan-950/60 border-t-2 border-cyan-400/80 rounded-b-lg text-center font-black text-cyan-300 text-xs md:text-sm active:bg-cyan-500/40" ontouchstart="handleTouch(5)" onclick="handleTouch(5)">L</div>
+                </div>
+            </div>
+
+            <!-- Pause Button -->
+            <button onclick="pauseGame()" class="absolute top-4 left-4 z-20 w-10 h-10 rounded-full sekai-glass flex items-center justify-center text-white hover:bg-white/20">
+                <i class="fa-solid fa-pause"></i>
+            </button>
+        </section>
+
+        <!-- ==================== SCREEN 3: RESULT SCREEN ==================== -->
+        <section id="resultScreen" class="absolute inset-0 hidden z-30 sekai-glass flex items-center justify-center p-4">
+            <div class="w-full max-w-xl bg-slate-900/90 rounded-3xl p-6 md:p-8 border border-cyan-500/40 shadow-2xl flex flex-col items-center">
+                <!-- Clear Header -->
+                <div id="resultStatus" class="font-black text-4xl md:text-5xl tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-pink-400 mb-2 glow-cyan">
+                    STAGE CLEAR
+                </div>
+                <p id="resSongTitle" class="text-gray-300 font-medium mb-6 text-sm">Tell Your World [EXPERT]</p>
+
+                <!-- Score Rank Badge & Total Score -->
+                <div class="w-full flex justify-around items-center bg-black/40 rounded-2xl p-4 border border-white/10 mb-6">
+                    <div id="rankBadge" class="w-16 h-16 rounded-xl bg-gradient-to-tr from-yellow-400 to-amber-600 flex items-center justify-center text-3xl font-black text-black shadow-lg">
+                        S
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-cyan-300 font-bold">TOTAL SCORE</div>
+                        <div id="resScore" class="font-black text-3xl text-white tracking-wider">01,245,600</div>
+                    </div>
+                </div>
+
+                <!-- Detailed Breakdown -->
+                <div class="w-full grid grid-cols-2 gap-3 mb-6 text-sm font-bold">
+                    <div class="flex justify-between items-center bg-cyan-950/30 p-2.5 rounded-lg border border-cyan-500/20">
+                        <span class="text-cyan-300">PERFECT</span>
+                        <span id="cnt-PERFECT" class="text-white">0</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-emerald-950/30 p-2.5 rounded-lg border border-emerald-500/20">
+                        <span class="text-emerald-300">GREAT</span>
+                        <span id="cnt-GREAT" class="text-white">0</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-yellow-950/30 p-2.5 rounded-lg border border-yellow-500/20">
+                        <span class="text-yellow-300">GOOD</span>
+                        <span id="cnt-GOOD" class="text-white">0</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-orange-950/30 p-2.5 rounded-lg border border-orange-500/20">
+                        <span class="text-orange-300">BAD</span>
+                        <span id="cnt-BAD" class="text-white">0</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-red-950/30 p-2.5 rounded-lg border border-red-500/20">
+                        <span class="text-red-400">MISS</span>
+                        <span id="cnt-MISS" class="text-white">0</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-purple-950/30 p-2.5 rounded-lg border border-purple-500/20">
+                        <span class="text-purple-300">MAX COMBO</span>
+                        <span id="resMaxCombo" class="text-white">0</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex space-x-4 w-full">
+                    <button onclick="retryLive()" class="flex-1 py-3.5 rounded-xl bg-gray-800 border border-gray-600 font-bold hover:bg-gray-700 transition">
+                        RETRY
+                    </button>
+                    <button onclick="exitToMenu()" class="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-pink-500 font-black text-black hover:brightness-110 transition">
+                        SELECT SONG
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- JavaScript Rhythm Logic & Audio Engine -->
+    <script>
+        /* ==================== SONG DATABASE ==================== */
+        const SONG_DATABASE = [
+            {
+                id: 'tellyourworld',
+                title: 'Tell Your World',
+                composer: 'kz (livetune) feat. 初音ミク',
+                unit: 'Virtual Singer',
+                unitClass: 'unit-miku',
+                bpm: 150,
+                levels: { EASY: 6, NORMAL: 12, HARD: 18, EXPERT: 25, MASTER: 30 },
+                jacket: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&auto=format&fit=crop&q=80',
+                // Web Audio Synth Melodic Frequencies + Rhythm fallback generator
+                melodyNotes: [
+                    { time: 0.5, key: 2 }, { time: 0.9, key: 3 }, { time: 1.3, key: 4 }, { time: 1.7, key: 3 },
+                    { time: 2.1, key: 2 }, { time: 2.5, key: 1 }, { time: 2.9, key: 2 }, { time: 3.5, key: 4 },
+                    { time: 4.1, key: 3 }, { time: 4.5, key: 2 }, { time: 4.9, key: 1 }, { time: 5.3, key: 0 },
+                    { time: 5.8, key: 2 }, { time: 6.2, key: 3 }, { time: 6.6, key: 4 }, { time: 7.2, key: 5 },
+                    { time: 8.0, key: 2 }, { time: 8.4, key: 2 }, { time: 8.8, key: 3 }, { time: 9.2, key: 4 },
+                    { time: 9.8, key: 1 }, { time: 10.2, key: 2 }, { time: 10.6, key: 3 }, { time: 11.0, key: 4 },
+                    { time: 11.6, key: 0 }, { time: 12.0, key: 1 }, { time: 12.4, key: 2 }, { time: 12.8, key: 3 },
+                    { time: 13.5, key: 2 }, { time: 13.9, key: 3 }, { time: 14.3, key: 4 }, { time: 14.8, key: 5 }
+                ]
+            },
+            {
+                id: 'worldismine',
+                title: 'ワールドイズマイン (World is Mine)',
+                composer: 'ryo (supercell) feat. 初音ミク',
+                unit: 'Virtual Singer',
+                unitClass: 'unit-miku',
+                bpm: 165,
+                levels: { EASY: 7, NORMAL: 13, HARD: 19, EXPERT: 26, MASTER: 31 },
+                jacket: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=80',
+                melodyNotes: [
+                    { time: 0.4, key: 0 }, { time: 0.8, key: 1 }, { time: 1.2, key: 2 }, { time: 1.6, key: 3 },
+                    { time: 2.0, key: 4 }, { time: 2.4, key: 5 }, { time: 2.8, key: 3 }, { time: 3.2, key: 2 },
+                    { time: 3.8, key: 1 }, { time: 4.2, key: 2 }, { time: 4.6, key: 3 }, { time: 5.0, key: 4 },
+                    { time: 5.6, key: 0 }, { time: 6.0, key: 2 }, { time: 6.4, key: 4 }, { time: 6.8, key: 5 },
+                    { time: 7.5, key: 3 }, { time: 7.9, key: 2 }, { time: 8.3, key: 1 }, { time: 8.7, key: 0 }
+                ]
+            },
+            {
+                id: 'senbonzakura',
+                title: '千本桜 (Senbonzakura)',
+                composer: '黒うさP feat. 初音ミク',
+                unit: 'Leo/need x VS',
+                unitClass: 'unit-ln',
+                bpm: 154,
+                levels: { EASY: 8, NORMAL: 14, HARD: 20, EXPERT: 27, MASTER: 32 },
+                jacket: 'https://images.unsplash.com/photo-1528164344705-475426879e0d?w=800&auto=format&fit=crop&q=80',
+                melodyNotes: [
+                    { time: 0.3, key: 1 }, { time: 0.6, key: 2 }, { time: 0.9, key: 3 }, { time: 1.2, key: 4 },
+                    { time: 1.5, key: 2 }, { time: 1.8, key: 3 }, { time: 2.1, key: 4 }, { time: 2.4, key: 5 },
+                    { time: 3.0, key: 0 }, { time: 3.3, key: 1 }, { time: 3.6, key: 2 }, { time: 3.9, key: 3 },
+                    { time: 4.5, key: 4 }, { time: 4.8, key: 3 }, { time: 5.1, key: 2 }, { time: 5.4, key: 1 }
+                ]
+            },
+            {
+                id: 'king',
+                title: 'KING',
+                composer: 'Kanaria feat. 初音ミク',
+                unit: 'Wonderlands x Showtime',
+                unitClass: 'unit-wxs',
+                bpm: 170,
+                levels: { EASY: 7, NORMAL: 13, HARD: 19, EXPERT: 26, MASTER: 31 },
+                jacket: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800&auto=format&fit=crop&q=80',
+                melodyNotes: [
+                    { time: 0.4, key: 2 }, { time: 0.7, key: 3 }, { time: 1.0, key: 2 }, { time: 1.3, key: 3 },
+                    { time: 1.8, key: 4 }, { time: 2.1, key: 5 }, { time: 2.4, key: 4 }, { time: 2.7, key: 3 },
+                    { time: 3.2, key: 1 }, { time: 3.5, key: 2 }, { time: 3.8, key: 0 }, { time: 4.1, key: 1 }
+                ]
+            },
+            {
+                id: 'bug',
+                title: 'バグ (Bug)',
+                composer: 'かいりきベア feat. 初音ミク',
+                unit: '25-ji, Nightcord de.',
+                unitClass: 'unit-25ji',
+                bpm: 185,
+                levels: { EASY: 9, NORMAL: 15, HARD: 22, EXPERT: 28, MASTER: 33 },
+                jacket: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80',
+                melodyNotes: [
+                    { time: 0.2, key: 0 }, { time: 0.5, key: 1 }, { time: 0.8, key: 2 }, { time: 1.1, key: 3 },
+                    { time: 1.4, key: 4 }, { time: 1.7, key: 5 }, { time: 2.0, key: 4 }, { time: 2.3, key: 3 },
+                    { time: 2.8, key: 1 }, { time: 3.1, key: 2 }, { time: 3.4, key: 3 }, { time: 3.7, key: 4 }
+                ]
+            }
+        ];
+
+        /* ==================== GLOBAL STATE ==================== */
+        let currentSong = SONG_DATABASE[0];
+        let currentDifficulty = 'EXPERT';
+        let audioCtx = null;
+        let isPlaying = false;
+        let startTime = 0;
+        let animationFrameId = null;
+
+        // Chart & Gameplay Variables
+        const LANE_COUNT = 6;
+        const KEY_MAPPINGS = ['KeyS', 'KeyD', 'KeyF', 'KeyJ', 'KeyK', 'KeyL'];
+        let activeNotes = [];
+        let score = 0;
+        let combo = 0;
+        let maxCombo = 0;
+        let life = 1000;
+
+        let judgmentCounts = {
+            PERFECT: 0,
+            GREAT: 0,
+            GOOD: 0,
+            BAD: 0,
+            MISS: 0
+        };
+
+        // High scores object
+        let highScores = {};
+
+        /* ==================== INITIALIZATION ==================== */
+        window.addEventListener('load', () => {
+            renderSongList();
+            selectSong(SONG_DATABASE[0].id);
+            setupCanvas();
+            window.addEventListener('resize', setupCanvas);
+            
+            // Desktop Key Listeners
+            window.addEventListener('keydown', (e) => {
+                if (!isPlaying) return;
+                const index = KEY_MAPPINGS.indexOf(e.code);
+                if (index !== -1 && !e.repeat) {
+                    processTap(index);
+                    highlightKeycap(index, true);
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                const index = KEY_MAPPINGS.indexOf(e.code);
+                if (index !== -1) {
+                    highlightKeycap(index, false);
+                }
+            });
+        });
+
+        /* ==================== AUDIO SYNTHESIZER ENGINE ==================== */
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Instant Zero-Latency Hit Sound Effect
+        function playHitSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+            osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.08);
+
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.08);
+        }
+
+        // Play BGM / Melodic Synthesizer Note Sequence synchronously
+        function playSongAudio(song, difficulty) {
+            initAudioContext();
+            
+            // Build procedural beat melody loop matching BPM
+            const speedMultiplier = difficulty === 'EASY' ? 1.5 : (difficulty === 'MASTER' ? 0.8 : 1.0);
+            
+            song.melodyNotes.forEach(note => {
+                const noteTime = startTime + (note.time * speedMultiplier * 1000);
+                const delayMs = noteTime - performance.now();
+                
+                if (delayMs >= 0) {
+                    setTimeout(() => {
+                        if (!isPlaying) return;
+                        playSynthesizedSynthNote(note.key);
+                    }, delayMs);
+                }
+            });
+        }
+
+        function playSynthesizedSynthNote(keyIndex) {
+            if (!audioCtx || !isPlaying) return;
+            const frequencies = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00]; // C4 to A4
+            const freq = frequencies[keyIndex % frequencies.length];
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+            gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        /* ==================== SONG SELECT LOGIC ==================== */
+        function renderSongList() {
+            const container = document.getElementById('songListContainer');
+            container.innerHTML = '';
+
+            SONG_DATABASE.forEach(song => {
+                const isSelected = song.id === currentSong.id;
+                const item = document.createElement('div');
+                item.className = `p-4 rounded-xl border transition cursor-pointer flex items-center justify-between sekai-btn ${
+                    isSelected 
+                    ? 'bg-gradient-to-r from-cyan-900/60 to-slate-800 border-cyan-400 shadow-lg shadow-cyan-500/20' 
+                    : 'bg-black/30 border-white/10 hover:border-white/30 hover:bg-black/50'
+                }`;
+                item.onclick = () => selectSong(song.id);
+
+                item.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <img src="${song.jacket}" class="w-12 h-12 rounded-lg object-cover border border-white/20" alt="${song.title}">
+                        <div>
+                            <div class="text-xs ${song.unitClass} font-bold mb-0.5">${song.unit}</div>
+                            <div class="font-bold text-white text-sm md:text-base">${song.title}</div>
+                            <div class="text-xs text-gray-400">${song.composer}</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs px-2.5 py-1 rounded-full bg-cyan-950 text-cyan-300 font-bold border border-cyan-500/30">
+                            Lv.${song.levels[currentDifficulty]}
+                        </span>
+                    </div>
+                `;
+
+                container.appendChild(item);
+            });
+        }
+
+        function selectSong(id) {
+            currentSong = SONG_DATABASE.find(s => s.id === id);
+            
+            // Update UI
+            document.getElementById('songTitle').innerText = currentSong.title;
+            document.getElementById('songComposer').innerText = currentSong.composer;
+            document.getElementById('songBpm').innerText = currentSong.bpm;
+            document.getElementById('songJacket').src = currentSong.jacket;
+            document.getElementById('songUnitText').innerText = currentSong.unit;
+            document.getElementById('songUnitBadge').className = `inline-flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-bold mb-3 ${currentSong.unitClass} bg-black/40`;
+            
+            const high = highScores[currentSong.id] || 0;
+            document.getElementById('songHighScore').innerText = String(high).padStart(7, '0');
+
+            updateDifficultyDisplay();
+            renderSongList();
+        }
+
+        function setDifficulty(diff) {
+            currentDifficulty = diff;
+            
+            // Highlight difficulty button
+            document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('ring-2', 'ring-cyan-400', 'scale-105'));
+            const selectedBtn = document.getElementById(`diff-${diff}`);
+            if (selectedBtn) {
+                selectedBtn.classList.add('ring-2', 'ring-cyan-400');
+            }
+
+            updateDifficultyDisplay();
+            renderSongList();
+        }
+
+        function updateDifficultyDisplay() {
+            Object.keys(currentSong.levels).forEach(d => {
+                const el = document.getElementById(`lvl-${d}`);
+                if (el) el.innerText = `Lv.${currentSong.levels[d]}`;
+            });
+        }
+
+        /* ==================== START CONFIRMATION MODAL ==================== */
+        function openStartConfirmation() {
+            initAudioContext();
+            document.getElementById('modalSongTitle').innerText = currentSong.title;
+            document.getElementById('modalSongDiff').innerText = `${currentDifficulty} Lv.${currentSong.levels[currentDifficulty]}`;
+            document.getElementById('modalJacket').src = currentSong.jacket;
+            document.getElementById('startModal').classList.remove('hidden');
+        }
+
+        function closeStartConfirmation() {
+            document.getElementById('startModal').classList.add('hidden');
+        }
+
+        function confirmStartLive() {
+            closeStartConfirmation();
+            startLive();
+        }
+
+        /* ==================== RHYTHM CANVAS GRAPHICS ==================== */
+        let canvas, ctx;
+
+        function setupCanvas() {
+            canvas = document.getElementById('gameCanvas');
+            if (!canvas) return;
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            ctx = canvas.getContext('2d');
+        }
+
+        function generateChartNotes(song, difficulty) {
+            const notes = [];
+            const speedMult = difficulty === 'EASY' ? 1.4 : (difficulty === 'MASTER' ? 0.7 : 1.0);
+            
+            // Generate chart from melody + procedurally filled beats
+            song.melodyNotes.forEach(m => {
+                notes.push({
+                    key: m.key,
+                    time: m.time * speedMult,
+                    hit: false,
+                    missed: false
+                });
+            });
+
+            // Add fill notes based on BPM
+            const totalDuration = 20; // 20 seconds loop
+            const beatInterval = 60 / song.bpm;
+            let currentTime = 0.5;
+
+            while (currentTime < totalDuration) {
+                const lane = Math.floor(Math.random() * LANE_COUNT);
+                // Avoid overlapping notes on exact same time/lane
+                if (!notes.some(n => Math.abs(n.time - currentTime) < 0.15 && n.key === lane)) {
+                    notes.push({
+                        key: lane,
+                        time: currentTime,
+                        hit: false,
+                        missed: false
+                    });
+                }
+                currentTime += beatInterval * (difficulty === 'EASY' ? 2 : 1);
+            }
+
+            notes.sort((a, b) => a.time - b.time);
+            return notes;
+        }
+
+        /* ==================== GAMEPLAY LOOP ==================== */
+        function startLive() {
+            initAudioContext();
+            
+            // Switch UI screens
+            document.getElementById('selectScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('hudSongTitle').innerText = currentSong.title;
+            document.getElementById('hudDiffBadge').innerText = `${currentDifficulty} Lv.${currentSong.levels[currentDifficulty]}`;
+
+            // Reset game states
+            score = 0;
+            combo = 0;
+            maxCombo = 0;
+            life = 1000;
+            judgmentCounts = { PERFECT: 0, GREAT: 0, GOOD: 0, BAD: 0, MISS: 0 };
+            
+            updateHUD();
+
+            activeNotes = generateChartNotes(currentSong, currentDifficulty);
+            isPlaying = true;
+            startTime = performance.now();
+
+            // Start Audio
+            playSongAudio(currentSong, currentDifficulty);
+
+            // Start Animation Loop
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            gameLoop();
+        }
+
+        function gameLoop() {
+            if (!isPlaying) return;
+
+            const elapsedTime = (performance.now() - startTime) / 1000;
+
+            // Render Frame
+            renderRhythmTrack(elapsedTime);
+
+            // Check for missed notes
+            activeNotes.forEach(note => {
+                if (!note.hit && !note.missed && elapsedTime - note.time > 0.25) {
+                    note.missed = true;
+                    handleJudgment('MISS');
+                }
+            });
+
+            // Check End Condition
+            const remainingNotes = activeNotes.filter(n => !n.hit && !n.missed);
+            if (remainingNotes.length === 0 && elapsedTime > activeNotes[activeNotes.length - 1].time + 1.5) {
+                finishLive();
+                return;
+            }
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        /* 3D Trapezoid Lane Renderer */
+        function renderRhythmTrack(elapsedTime) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // Trapezoid Perspective Parameters
+            const topY = h * 0.15;
+            const bottomY = h * 0.88;
+            const topWidth = w * 0.28;
+            const bottomWidth = w * 0.85;
+
+            const topX = (w - topWidth) / 2;
+            const bottomX = (w - bottomWidth) / 2;
+
+            // Background Track Glow / Dark Lane
+            ctx.fillStyle = 'rgba(12, 18, 28, 0.9)';
+            ctx.beginPath();
+            ctx.moveTo(topX, topY);
+            ctx.lineTo(topX + topWidth, topY);
+            ctx.lineTo(bottomX + bottomWidth, bottomY);
+            ctx.lineTo(bottomX, bottomY);
+            ctx.closePath();
+            ctx.fill();
+
+            // Lane Divider Lines
+            ctx.strokeStyle = 'rgba(51, 204, 255, 0.25)';
+            ctx.lineWidth = 2;
+
+            for (let i = 0; i <= LANE_COUNT; i++) {
+                const ratio = i / LANE_COUNT;
+                const x1 = topX + topWidth * ratio;
+                const x2 = bottomX + bottomWidth * ratio;
+
+                ctx.beginPath();
+                ctx.moveTo(x1, topY);
+                ctx.lineTo(x2, bottomY);
+                ctx.stroke();
+            }
+
+            // Hit Target Line (Project Sekai Glowing Bar)
+            const targetY = bottomY - 10;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#33ccff';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(bottomX, targetY);
+            ctx.lineTo(bottomX + bottomWidth, targetY);
+            ctx.stroke();
+            ctx.shadowBlur = 0; // Reset shadow
+
+            // Falling Notes Rendering
+            const scrollSpeed = 1.6; // Seconds visible on screen
+
+            activeNotes.forEach(note => {
+                if (note.hit || note.missed) return;
+
+                const timeDiff = note.time - elapsedTime;
+                if (timeDiff <= scrollSpeed && timeDiff >= -0.2) {
+                    // Progress from 0 (top) to 1 (target line)
+                    const progress = 1 - (timeDiff / scrollSpeed);
+
+                    if (progress >= 0 && progress <= 1.05) {
+                        // Interpolate coordinates along perspective lane
+                        const currentY = topY + (targetY - topY) * progress;
+                        
+                        const laneWidthTop = topWidth / LANE_COUNT;
+                        const laneWidthBottom = bottomWidth / LANE_COUNT;
+
+                        const laneLeftTop = topX + laneWidthTop * note.key;
+                        const laneLeftBottom = bottomX + laneWidthBottom * note.key;
+
+                        const noteX = laneLeftTop + (laneLeftBottom - laneLeftTop) * progress;
+                        const noteWidth = laneWidthTop + (laneWidthBottom - laneWidthTop) * progress;
+
+                        // Draw Project Sekai Cyan/Yellow Bar Note
+                        const noteHeight = 12 * (0.4 + progress * 0.8);
+
+                        ctx.fillStyle = (note.key % 2 === 0) ? '#33ccff' : '#ff3399';
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = ctx.fillStyle;
+
+                        ctx.beginPath();
+                        ctx.roundRect(noteX + 2, currentY - noteHeight / 2, noteWidth - 4, noteHeight, [4]);
+                        ctx.fill();
+
+                        ctx.shadowBlur = 0;
+                    }
+                }
+            });
+        }
+
+        /* ==================== TAP INTERACTION & JUDGMENT ==================== */
+        function processTap(laneIndex) {
+            playHitSound();
+
+            if (!isPlaying) return;
+            const elapsedTime = (performance.now() - startTime) / 1000;
+
+            // Find nearest unhit note in lane
+            const candidate = activeNotes.find(n => !n.hit && !n.missed && n.key === laneIndex && Math.abs(n.time - elapsedTime) <= 0.22);
+
+            if (candidate) {
+                candidate.hit = true;
+                const diff = Math.abs(candidate.time - elapsedTime);
+
+                if (diff <= 0.05) {
+                    handleJudgment('PERFECT');
+                } else if (diff <= 0.10) {
+                    handleJudgment('GREAT');
+                } else if (diff <= 0.16) {
+                    handleJudgment('GOOD');
+                } else {
+                    handleJudgment('BAD');
+                }
+            }
+        }
+
+        function handleTouch(laneIndex) {
+            processTap(laneIndex);
+        }
+
+        function handleJudgment(type) {
+            judgmentCounts[type]++;
+
+            const jText = document.getElementById('judgmentText');
+            jText.innerText = type;
+            jText.classList.remove('animate-popup');
+            void jText.offsetWidth; // Trigger reflow for restart animation
+            jText.classList.add('animate-popup');
+
+            // Judgment Colors & Score Calculation
+            if (type === 'PERFECT') {
+                jText.className = 'font-black text-3xl md:text-4xl mt-2 tracking-widest text-cyan-300 glow-cyan animate-popup';
+                score += 1000 + (combo * 10);
+                combo++;
+            } else if (type === 'GREAT') {
+                jText.className = 'font-black text-3xl md:text-4xl mt-2 tracking-widest text-emerald-300 animate-popup';
+                score += 700 + (combo * 5);
+                combo++;
+            } else if (type === 'GOOD') {
+                jText.className = 'font-black text-3xl md:text-4xl mt-2 tracking-widest text-yellow-300 animate-popup';
+                score += 400;
+                combo = 0; // Breaks combo in Project Sekai
+            } else if (type === 'BAD') {
+                jText.className = 'font-black text-3xl md:text-4xl mt-2 tracking-widest text-orange-400 animate-popup';
+                life = Math.max(0, life - 50);
+                combo = 0;
+            } else if (type === 'MISS') {
+                jText.className = 'font-black text-3xl md:text-4xl mt-2 tracking-widest text-red-500 animate-popup';
+                life = Math.max(0, life - 100);
+                combo = 0;
+            }
+
+            if (combo > maxCombo) maxCombo = combo;
+            updateHUD();
+
+            // Fail condition
+            if (life <= 0) {
+                finishLive(false);
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('scoreText').innerText = String(score).padStart(8, '0');
+            document.getElementById('lifeText').innerText = `${life} / 1000`;
+            document.getElementById('lifeBar').style.width = `${(life / 1000) * 100}%`;
+
+            const comboContainer = document.getElementById('comboContainer');
+            if (combo >= 3) {
+                comboContainer.classList.remove('hidden');
+                document.getElementById('comboNum').innerText = combo;
+            } else {
+                comboContainer.classList.add('hidden');
+            }
+        }
+
+        function highlightKeycap(index, active) {
+            const btns = document.querySelectorAll('.keycap-btn');
+            if (btns[index]) {
+                if (active) {
+                    btns[index].classList.add('bg-cyan-500', 'text-black');
+                } else {
+                    btns[index].classList.remove('bg-cyan-500', 'text-black');
+                }
+            }
+        }
+
+        /* ==================== RESULT SCREEN & NAVIGATION ==================== */
+        function finishLive(cleared = true) {
+            isPlaying = false;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+            // Update High Score
+            if (cleared && score > (highScores[currentSong.id] || 0)) {
+                highScores[currentSong.id] = score;
+            }
+
+            // Populate Results Screen
+            document.getElementById('resultStatus').innerText = cleared ? 'STAGE CLEAR' : 'STAGE FAILED';
+            document.getElementById('resSongTitle').innerText = `${currentSong.title} [${currentDifficulty}]`;
+            document.getElementById('resScore').innerText = String(score).padStart(8, '0');
+
+            // Rank Logic
+            let rank = 'C';
+            if (score >= 120000) rank = 'S';
+            else if (score >= 90000) rank = 'A';
+            else if (score >= 60000) rank = 'B';
+            document.getElementById('rankBadge').innerText = rank;
+
+            document.getElementById('cnt-PERFECT').innerText = judgmentCounts.PERFECT;
+            document.getElementById('cnt-GREAT').innerText = judgmentCounts.GREAT;
+            document.getElementById('cnt-GOOD').innerText = judgmentCounts.GOOD;
+            document.getElementById('cnt-BAD').innerText = judgmentCounts.BAD;
+            document.getElementById('cnt-MISS').innerText = judgmentCounts.MISS;
+            document.getElementById('resMaxCombo').innerText = maxCombo;
+
+            // Show Result Screen
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+        }
+
+        function pauseGame() {
+            isPlaying = false;
+            if (confirm("Pause Game. Return to Song Select?")) {
+                exitToMenu();
+            } else {
+                isPlaying = true;
+                gameLoop();
+            }
+        }
+
+        function retryLive() {
+            document.getElementById('resultScreen').classList.add('hidden');
+            startLive();
+        }
+
+        function exitToMenu() {
+            isPlaying = false;
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('selectScreen').classList.remove('hidden');
+            selectSong(currentSong.id);
+        }
+    </script>
+</body>
+</html>
